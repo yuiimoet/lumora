@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Lumora - Tasks</title>
+<script>if(localStorage.getItem('theme')==='dark')document.documentElement.classList.add('dark')</script>
+<style>
+:root{--bg:#F5F0FF;--card:#FFFFFF;--text:#4A4063}
+:root.dark{--bg:#1E1B2E;--card:#2A2640;--text:#E8D5F5}
+*{margin:0;padding:0;box-sizing:border-box}
+body{width:390px;max-width:100vw;margin:0 auto;min-height:100vh;background:var(--bg);font-family:'Segoe UI',system-ui,sans-serif;color:var(--text);padding-bottom:100px}
+.header{padding:20px;display:flex;align-items:center;justify-content:space-between}
+.header-left{display:flex;align-items:center;gap:8px}
+.header h1{font-size:22px;font-weight:700}
+.back-btn{background:none;border:none;font-size:24px;cursor:pointer;color:var(--text);text-decoration:none}
+.date-display{padding:0 20px;font-size:13px;opacity:0.6;margin-bottom:12px}
+.progress-bar{margin:0 20px 16px;height:8px;background:rgba(195,166,232,0.2);border-radius:10px;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,#C3A6E8,#A8D8EA);border-radius:10px;transition:width 0.5s}
+.tabs{display:flex;gap:8px;padding:0 20px;overflow-x:auto;scrollbar-width:none;margin-bottom:16px}
+.tabs::-webkit-scrollbar{display:none}
+.tab{padding:8px 16px;border-radius:20px;border:none;font-size:13px;cursor:pointer;white-space:nowrap;background:var(--card);color:var(--text);transition:all 0.3s}
+.tab.active{background:linear-gradient(135deg,#C3A6E8,#A8D8EA);color:white}
+.task-list{padding:0 20px}
+.task-card{background:var(--card);border-radius:16px;padding:16px;margin-bottom:10px;display:flex;align-items:flex-start;gap:12px;box-shadow:0 2px 8px rgba(195,166,232,0.1);position:relative;transition:transform 0.3s,opacity 0.3s;touch-action:pan-y}
+.task-card.completed{opacity:0.5}
+.task-card.completed .task-title{text-decoration:line-through}
+.task-check{width:22px;height:22px;border-radius:50%;border:2px solid #C3A6E8;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;margin-top:2px;background:transparent}
+.task-check.checked{background:#C3A6E8;border-color:#C3A6E8}
+.task-check.checked::after{content:'✓';color:white;font-size:14px}
+.task-content{flex:1}
+.task-title{font-size:15px;font-weight:500;margin-bottom:4px}
+.task-meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.priority-badge{font-size:12px}
+.category-tag{font-size:11px;padding:2px 8px;border-radius:10px;background:rgba(195,166,232,0.15);color:var(--text)}
+.reminder-icon{font-size:14px;opacity:0.6}
+.task-delete{position:absolute;right:-60px;top:50%;transform:translateY(-50%);background:#e74c3c;color:white;border:none;padding:8px 16px;border-radius:0 16px 16px 0;font-size:14px;cursor:pointer;transition:right 0.3s}
+.task-card.swiped .task-delete{right:0}
+.fab{position:fixed;bottom:24px;right:calc(50% - 175px);width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#C3A6E8,#A8D8EA);border:none;font-size:28px;color:white;cursor:pointer;box-shadow:0 4px 20px rgba(195,166,232,0.4);z-index:90;transition:transform 0.2s}
+.fab:active{transform:scale(0.9)}
+.overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.4);z-index:200}
+.overlay.show{display:block}
+.bottom-sheet{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:390px;max-width:100vw;background:var(--card);border-radius:20px 20px 0 0;padding:24px;z-index:201;transform:translateX(-50%) translateY(100%);transition:transform 0.3s}
+.bottom-sheet.show{transform:translateX(-50%) translateY(0)}
+.sheet-handle{width:40px;height:4px;background:rgba(195,166,232,0.3);border-radius:2px;margin:0 auto 20px}
+.sheet-title{font-size:18px;font-weight:600;margin-bottom:20px}
+.sheet-input{width:100%;padding:12px 16px;border:2px solid rgba(195,166,232,0.3);border-radius:12px;font-size:15px;margin-bottom:12px;background:var(--bg);color:var(--text);outline:none}
+.sheet-input:focus{border-color:#C3A6E8}
+.sheet-label{font-size:13px;margin-bottom:6px;opacity:0.7;display:block}
+.priority-select{display:flex;gap:8px;margin-bottom:12px}
+.pri-btn{padding:8px 16px;border-radius:12px;border:2px solid rgba(195,166,232,0.3);background:var(--bg);cursor:pointer;font-size:14px;color:var(--text)}
+.pri-btn.active{border-color:#C3A6E8;background:rgba(195,166,232,0.15)}
+.btn-save{width:100%;padding:14px;border:none;border-radius:14px;font-size:16px;font-weight:600;color:white;background:linear-gradient(135deg,#C3A6E8,#A8D8EA);cursor:pointer;margin-top:8px}
+.reminder-banner{position:fixed;top:0;left:50%;transform:translateX(-50%);width:390px;max-width:100vw;background:linear-gradient(135deg,#C3A6E8,#A8D8EA);color:white;padding:16px 20px;z-index:999;display:flex;align-items:center;justify-content:space-between;font-size:14px;animation:slideDown 0.3s ease}
+@keyframes slideDown{from{transform:translateX(-50%) translateY(-100%)}to{transform:translateX(-50%) translateY(0)}}
+.reminder-banner button{background:none;border:none;color:white;font-size:20px;cursor:pointer}
+.empty-state{text-align:center;padding:40px;opacity:0.5;font-size:14px}
+</style>
+</head>
+<body>
+<div id="reminderContainer"></div>
+<div class="header">
+  <div class="header-left">
+    <a href="index.html" class="back-btn">←</a>
+    <h1 id="pageTitle"></h1>
+  </div>
+  <span style="font-size:24px">🌙</span>
+</div>
+<div class="date-display" id="dateDisplay"></div>
+<div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+<div class="tabs" id="tabs"></div>
+<div class="task-list" id="taskList"></div>
+<button class="fab" onclick="openSheet()">+</button>
+<div class="overlay" id="overlay" onclick="closeSheet()"></div>
+<div class="bottom-sheet" id="bottomSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title" id="sheetTitle"></div>
+  <label class="sheet-label" id="lblTaskName"></label>
+  <input class="sheet-input" id="taskName" placeholder="">
+  <label class="sheet-label" id="lblCategory"></label>
+  <div class="tabs" id="catTabs" style="padding:0;margin-bottom:12px"></div>
+  <label class="sheet-label" id="lblPriority"></label>
+  <div class="priority-select" id="priorityBtns"></div>
+  <label class="sheet-label" id="lblReminder"></label>
+  <input class="sheet-input" id="reminderDate" type="datetime-local">
+  <button class="btn-save" id="btnSave" onclick="saveTask()"></button>
+</div>
+<script>
+const T={
+  id:{title:'Tugas Saya',addTask:'Tambah Tugas',taskName:'Nama Tugas',category:'Kategori',priority:'Prioritas',reminder:'Pengingat',save:'Simpan',
+    cats:['Semua','Pribadi','Belajar','Kerja','Lainnya'],priLabels:['Tinggi 🔴','Sedang 🟡','Rendah 🟢'],empty:'Belum ada tugas',reminderAlert:'🔔 Waktunya!',taskPh:'Masukkan nama tugas...'},
+  en:{title:'My Tasks',addTask:'Add Task',taskName:'Task Name',category:'Category',priority:'Priority',reminder:'Reminder',save:'Save',
+    cats:['All','Personal','Study','Work','Others'],priLabels:['High 🔴','Medium 🟡','Low 🟢'],empty:'No tasks yet',reminderAlert:'🔔 Time\'s up!',taskPh:'Enter task name...'}
+};
+const lang=localStorage.getItem('lang')||'id';const t=T[lang]||T.id;
+const catKeys=['all','personal','study','work','others'];
+let currentCat='all',selectedPri=1,tasks=JSON.parse(localStorage.getItem('lumora_tasks')||'[]');
+
+function applyLang(){
+  document.getElementById('pageTitle').textContent=t.title;
+  document.getElementById('dateDisplay').textContent=new Date().toLocaleDateString(lang==='id'?'id-ID':'en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  document.getElementById('sheetTitle').textContent=t.addTask;
+  document.getElementById('lblTaskName').textContent=t.taskName;
+  document.getElementById('lblCategory').textContent=t.category;
+  document.getElementById('lblPriority').textContent=t.priority;
+  document.getElementById('lblReminder').textContent=t.reminder;
+  document.getElementById('btnSave').textContent=t.save;
+  document.getElementById('taskName').placeholder=t.taskPh;
+  renderTabs();renderPriority();
+}
+
+function renderTabs(){
+  const c=document.getElementById('tabs');c.innerHTML='';
+  t.cats.forEach((name,i)=>{
+    const btn=document.createElement('button');btn.className='tab'+(catKeys[i]===currentCat?' active':'');
+    btn.textContent=name;btn.onclick=()=>{currentCat=catKeys[i];renderTabs();renderTasks()};c.appendChild(btn);
+  });
+}
+function renderPriority(){
+  const c=document.getElementById('priorityBtns');c.innerHTML='';
+  t.priLabels.forEach((label,i)=>{
+    const btn=document.createElement('button');btn.className='pri-btn'+(i===selectedPri?' active':'');
+    btn.textContent=label;btn.onclick=()=>{selectedPri=i;renderPriority()};c.appendChild(btn);
+  });
+}
+let selectedCatForNew=1;
+function renderCatTabs(){
+  const c=document.getElementById('catTabs');c.innerHTML='';
+  t.cats.slice(1).forEach((name,i)=>{
+    const btn=document.createElement('button');btn.className='tab'+(i===selectedCatForNew-1?' active':'');
+    btn.textContent=name;btn.onclick=()=>{selectedCatForNew=i+1;renderCatTabs()};c.appendChild(btn);
+  });
+}
+
+function renderTasks(){
+  const list=document.getElementById('taskList');list.innerHTML='';
+  let filtered=currentCat==='all'?tasks:tasks.filter(t=>t.category===currentCat);
+  if(filtered.length===0){list.innerHTML='<div class="empty-state">'+t.empty+'</div>';updateProgress();return}
+  filtered.forEach((task,idx)=>{
+    const realIdx=tasks.indexOf(task);
+    const priIcons=['🔴','🟡','🟢'];
+    const catName=t.cats[catKeys.indexOf(task.category)]||task.category;
+    const card=document.createElement('div');
+    card.className='task-card'+(task.done?' completed':'');
+    card.innerHTML=`
+      <div class="task-check ${task.done?'checked':''}" onclick="toggleTask(${realIdx})"></div>
+      <div class="task-content">
+        <div class="task-title">${task.title}</div>
+        <div class="task-meta">
+          <span class="priority-badge">${priIcons[task.priority]||'🟡'}</span>
+          <span class="category-tag">${catName}</span>
+          ${task.reminder?'<span class="reminder-icon">🔔</span>':''}
+        </div>
+      </div>`;
+    let startX=0;
+    card.addEventListener('touchstart',e=>{startX=e.touches[0].clientX});
+    card.addEventListener('touchmove',e=>{
+      const diff=startX-e.touches[0].clientX;
+      if(diff>50)card.style.transform='translateX(-60px)';
+      else card.style.transform='';
+    });
+    card.addEventListener('touchend',e=>{
+      const rect=card.getBoundingClientRect();
+      if(parseInt(card.style.transform.replace('translateX(',''))<-30){
+        const del=document.createElement('button');del.className='task-delete';del.textContent='🗑️';del.style.cssText='position:absolute;right:0;top:0;height:100%;background:#e74c3c;color:white;border:none;padding:0 16px;border-radius:0 16px 16px 0;font-size:18px;cursor:pointer';
+        del.onclick=()=>{tasks.splice(realIdx,1);saveTasks();renderTasks()};
+        card.style.position='relative';card.style.overflow='hidden';card.appendChild(del);
+      }
+    });
+    list.appendChild(card);
+  });
+  updateProgress();
+}
+
+function toggleTask(idx){tasks[idx].done=!tasks[idx].done;saveTasks();renderTasks()}
+function saveTasks(){localStorage.setItem('lumora_tasks',JSON.stringify(tasks))}
+function updateProgress(){
+  const done=tasks.filter(t=>t.done).length;
+  const pct=tasks.length?Math.round(done/tasks.length*100):0;
+  document.getElementById('progressFill').style.width=pct+'%';
+}
+
+function openSheet(){
+  selectedCatForNew=1;selectedPri=1;renderCatTabs();renderPriority();
+  document.getElementById('taskName').value='';document.getElementById('reminderDate').value='';
+  document.getElementById('overlay').classList.add('show');document.getElementById('bottomSheet').classList.add('show');
+}
+function closeSheet(){document.getElementById('overlay').classList.remove('show');document.getElementById('bottomSheet').classList.remove('show')}
+function saveTask(){
+  const title=document.getElementById('taskName').value.trim();if(!title)return;
+  const reminder=document.getElementById('reminderDate').value;
+  const task={id:Date.now(),title,category:catKeys[selectedCatForNew],priority:selectedPri,done:false,reminder:reminder||null,createdAt:new Date().toISOString()};
+  tasks.unshift(task);saveTasks();
+  if(reminder){
+    const reminders=JSON.parse(localStorage.getItem('reminders')||'[]');
+    reminders.push({id:task.id,title:task.title,datetime:reminder});
+    localStorage.setItem('reminders',JSON.stringify(reminders));
+  }
+  closeSheet();renderTasks();
+}
+
+function checkReminders(){
+  let reminders=JSON.parse(localStorage.getItem('reminders')||'[]');
+  const now=new Date();
+  const triggered=[];
+  reminders=reminders.filter(r=>{
+    const rTime=new Date(r.datetime);
+    if(now>=rTime){triggered.push(r);return false}
+    return true;
+  });
+  if(triggered.length){
+    localStorage.setItem('reminders',JSON.stringify(reminders));
+    triggered.forEach(r=>{
+      const banner=document.createElement('div');banner.className='reminder-banner';
+      banner.innerHTML=`<span>🔔 ${r.title} - ${t.reminderAlert}</span><button onclick="this.parentElement.remove()">×</button>`;
+      document.getElementById('reminderContainer').appendChild(banner);
+      setTimeout(()=>banner.remove(),10000);
+    });
+  }
+}
+setInterval(checkReminders,30000);checkReminders();
+
+applyLang();renderTasks();
+</script>
+</body>
+</html>

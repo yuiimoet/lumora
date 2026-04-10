@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Lumora - AI Assistant</title>
+<script>if(localStorage.getItem('theme')==='dark')document.documentElement.classList.add('dark')</script>
+<style>
+:root{--bg:#F5F0FF;--card:#FFFFFF;--text:#4A4063}
+:root.dark{--bg:#1E1B2E;--card:#2A2640;--text:#E8D5F5}
+*{margin:0;padding:0;box-sizing:border-box}
+body{width:390px;max-width:100vw;margin:0 auto;min-height:100vh;background:var(--bg);font-family:'Segoe UI',system-ui,sans-serif;color:var(--text)}
+.header{padding:20px;display:flex;align-items:center;gap:12px}
+.back-btn{background:none;border:none;font-size:24px;cursor:pointer;color:var(--text);text-decoration:none}
+.header-info h1{font-size:20px;font-weight:700}
+.header-info p{font-size:12px;opacity:0.6}
+.tabs{display:flex;gap:0;margin:0 20px;background:var(--card);border-radius:14px;overflow:hidden}
+.tab{flex:1;padding:12px 8px;border:none;background:transparent;color:var(--text);font-size:13px;cursor:pointer;text-align:center;transition:all 0.3s}
+.tab.active{background:linear-gradient(135deg,#C3A6E8,#A8D8EA);color:white}
+.tab-content{display:none;padding:20px}
+.tab-content.active{display:block}
+.chat-area{height:calc(100vh - 280px);overflow-y:auto;padding:0 0 16px;scroll-behavior:smooth}
+.chat-bubble{max-width:80%;padding:12px 16px;border-radius:16px;margin-bottom:8px;font-size:14px;line-height:1.5;animation:fadeIn 0.3s ease}
+.chat-user{background:#C3A6E8;color:white;margin-left:auto;border-bottom-right-radius:4px}
+.chat-ai{background:var(--card);border-bottom-left-radius:4px;box-shadow:0 2px 8px rgba(195,166,232,0.1)}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.chat-input-area{display:flex;gap:8px;padding:12px 0 0}
+.chat-input-area input{flex:1;padding:12px 16px;border:2px solid rgba(195,166,232,0.3);border-radius:14px;font-size:15px;background:var(--bg);color:var(--text);outline:none}
+.chat-input-area input:focus{border-color:#C3A6E8}
+.chat-send{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#C3A6E8,#A8D8EA);border:none;font-size:20px;color:white;cursor:pointer}
+.clear-chat{background:none;border:none;font-size:13px;color:#e74c3c;cursor:pointer;margin-top:8px;display:block}
+.summarize-area textarea{width:100%;height:150px;padding:16px;border:2px solid rgba(195,166,232,0.3);border-radius:14px;font-size:14px;background:var(--card);color:var(--text);outline:none;resize:none;font-family:inherit}
+.summarize-area textarea:focus{border-color:#C3A6E8}
+.btn-action{width:100%;padding:14px;border:none;border-radius:14px;font-size:16px;font-weight:600;color:white;background:linear-gradient(135deg,#C3A6E8,#A8D8EA);cursor:pointer;margin-top:12px}
+.result-box{background:var(--card);border-radius:14px;padding:16px;margin-top:16px;box-shadow:0 2px 8px rgba(195,166,232,0.1);display:none}
+.result-box.show{display:block}
+.result-box h3{font-size:15px;font-weight:600;margin-bottom:8px}
+.result-box ul{padding-left:20px;font-size:14px;line-height:1.8}
+.result-box .keywords{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.result-box .keyword{padding:4px 10px;background:rgba(195,166,232,0.15);border-radius:10px;font-size:12px}
+.copy-btn{background:none;border:1px solid rgba(195,166,232,0.3);border-radius:10px;padding:8px 16px;font-size:13px;cursor:pointer;color:var(--text);margin-top:12px}
+.flashcard-input{display:flex;gap:8px;margin-bottom:16px}
+.flashcard-input input{flex:1;padding:12px 16px;border:2px solid rgba(195,166,232,0.3);border-radius:14px;font-size:15px;background:var(--bg);color:var(--text);outline:none}
+.flashcard-container{perspective:800px;margin:20px 0}
+.flashcard{width:100%;min-height:200px;position:relative;transform-style:preserve-3d;transition:transform 0.6s;cursor:pointer}
+.flashcard.flipped{transform:rotateY(180deg)}
+.flashcard-face{position:absolute;width:100%;min-height:200px;backface-visibility:hidden;border-radius:16px;padding:24px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:16px;line-height:1.6;box-shadow:0 4px 20px rgba(195,166,232,0.15)}
+.flashcard-front{background:linear-gradient(135deg,#E8D5F5,#C3A6E8);color:white}
+.flashcard-back{background:var(--card);transform:rotateY(180deg)}
+.flashcard-nav{display:flex;justify-content:center;gap:16px;margin-top:16px}
+.flashcard-nav button{width:44px;height:44px;border-radius:50%;border:2px solid rgba(195,166,232,0.3);background:var(--card);font-size:20px;cursor:pointer;color:var(--text)}
+.flashcard-counter{text-align:center;font-size:13px;opacity:0.6;margin-top:8px}
+.loading{display:none;text-align:center;padding:20px}
+.loading.show{display:block}
+.loading-dots{display:inline-flex;gap:6px}
+.loading-dots span{width:8px;height:8px;border-radius:50%;background:#C3A6E8;animation:bounce 1.4s infinite ease-in-out both}
+.loading-dots span:nth-child(1){animation-delay:-0.32s}
+.loading-dots span:nth-child(2){animation-delay:-0.16s}
+@keyframes bounce{0%,80%,100%{transform:scale(0)}40%{transform:scale(1)}}
+</style>
+</head>
+<body>
+<div class="header">
+  <a href="index.html" class="back-btn">←</a>
+  <div class="header-info">
+    <h1 id="pageTitle"></h1>
+    <p id="pageSubtitle"></p>
+  </div>
+</div>
+<div class="tabs">
+  <button class="tab active" onclick="switchTab(0)" id="tab0"></button>
+  <button class="tab" onclick="switchTab(1)" id="tab1"></button>
+  <button class="tab" onclick="switchTab(2)" id="tab2"></button>
+</div>
+
+<div class="tab-content active" id="content0">
+  <div class="chat-area" id="chatArea"></div>
+  <div class="chat-input-area">
+    <input type="text" id="chatInput" onkeypress="if(event.key==='Enter')sendChat()" placeholder="">
+    <button class="chat-send" onclick="sendChat()">➤</button>
+  </div>
+  <button class="clear-chat" onclick="clearChat()" id="clearBtn"></button>
+</div>
+
+<div class="tab-content" id="content1">
+  <div class="summarize-area">
+    <textarea id="summarizeInput" placeholder=""></textarea>
+    <button class="btn-action" onclick="summarizeText()" id="btnSummarize"></button>
+  </div>
+  <div class="loading" id="sumLoading"><div class="loading-dots"><span></span><span></span><span></span></div></div>
+  <div class="result-box" id="sumResult">
+    <h3 id="keyPointsTitle"></h3>
+    <ul id="keyPoints"></ul>
+    <h3 id="summaryTitle" style="margin-top:12px"></h3>
+    <p id="summaryText"></p>
+    <h3 id="keywordsTitle" style="margin-top:12px"></h3>
+    <div class="keywords" id="keywordsList"></div>
+    <button class="copy-btn" onclick="copyResult()" id="copyBtn"></button>
+  </div>
+</div>
+
+<div class="tab-content" id="content2">
+  <div class="flashcard-input">
+    <input type="text" id="fcTopic" placeholder="">
+    <button class="btn-action" style="width:auto;padding:12px 20px" onclick="generateFlashcards()" id="btnGenFC"></button>
+  </div>
+  <div class="loading" id="fcLoading"><div class="loading-dots"><span></span><span></span><span></span></div></div>
+  <div class="flashcard-container" id="fcContainer" style="display:none">
+    <div class="flashcard" id="flashcard" onclick="flipCard()">
+      <div class="flashcard-face flashcard-front" id="fcFront"></div>
+      <div class="flashcard-face flashcard-back" id="fcBack"></div>
+    </div>
+  </div>
+  <div class="flashcard-nav" id="fcNav" style="display:none">
+    <button onclick="prevCard()">◀</button>
+    <button onclick="nextCard()">▶</button>
+  </div>
+  <div class="flashcard-counter" id="fcCounter"></div>
+  <button class="btn-action" id="btnSaveFC" onclick="saveFlashcards()" style="display:none"></button>
+</div>
+
+<script>
+const T={
+  id:{title:'Asisten AI 🤖',subtitle:'Teman belajar pintarmu ✨',
+    tab0:'💬 Tanya',tab1:'📝 Ringkas',tab2:'🃏 Kartu',
+    chatPh:'Ketik pertanyaanmu...',clear:'Hapus chat',
+    sumPh:'Tempel teks di sini untuk diringkas...',summarize:'Ringkas Teks',
+    keyPoints:'Poin Penting',summary:'Ringkasan',keywords:'Kata Kunci',copy:'📋 Salin',copied:'Tersalin!',
+    fcPh:'Masukkan topik...',generate:'Buat',save:'💾 Simpan Kartu',saved:'Tersimpan!',
+    greeting:'Halo! Aku Lumora AI, siap membantu belajarmu 🌙',
+    noAnswer:'Maaf, aku belum punya jawaban untuk itu. Coba tanya tentang sains, matematika, sejarah, atau tips belajar! 🌙'},
+  en:{title:'AI Assistant 🤖',subtitle:'Your smart study companion ✨',
+    tab0:'💬 Ask',tab1:'📝 Summarize',tab2:'🃏 Flashcards',
+    chatPh:'Type your question...',clear:'Clear chat',
+    sumPh:'Paste text here to summarize...',summarize:'Summarize Text',
+    keyPoints:'Key Points',summary:'Summary',keywords:'Keywords',copy:'📋 Copy',copied:'Copied!',
+    fcPh:'Enter topic...',generate:'Generate',save:'💾 Save Cards',saved:'Saved!',
+    greeting:'Hi! I\'m Lumora AI, ready to help you study 🌙',
+    noAnswer:'Sorry, I don\'t have an answer for that yet. Try asking about science, math, history, or study tips! 🌙'}
+};
+const lang=localStorage.getItem('lang')||'id';const t=T[lang]||T.id;
+
+const qaList=[
+  {keywords:['fotosintesis','photosynthesis'],answer:{id:'Fotosintesis adalah proses di mana tumbuhan mengubah cahaya matahari, air, dan karbon dioksida menjadi glukosa dan oksigen. Rumusnya: 6CO₂ + 6H₂O + cahaya → C₆H₁₂O₆ + 6O₂ 🌿',en:'Photosynthesis is the process where plants convert sunlight, water, and carbon dioxide into glucose and oxygen. Formula: 6CO₂ + 6H₂O + light → C₆H₁₂O₆ + 6O₂ 🌿'}},
+  {keywords:['mitosis','sel','cell division'],answer:{id:'Mitosis adalah pembelahan sel yang menghasilkan 2 sel anak identik. Tahapannya: Profase → Metafase → Anafase → Telofase. Penting untuk pertumbuhan dan perbaikan jaringan! 🧬',en:'Mitosis is cell division that produces 2 identical daughter cells. Stages: Prophase → Metaphase → Anaphase → Telophase. Important for growth and tissue repair! 🧬'}},
+  {keywords:['pythagoras','pitagoras'],answer:{id:'Teorema Pythagoras: a² + b² = c², di mana c adalah sisi miring (hipotenusa) segitiga siku-siku. Contoh: 3² + 4² = 5² → 9 + 16 = 25 ✓ 📐',en:'Pythagorean theorem: a² + b² = c², where c is the hypotenuse of a right triangle. Example: 3² + 4² = 5² → 9 + 16 = 25 ✓ 📐'}},
+  {keywords:['gravitasi','gravity','newton'],answer:{id:'Hukum gravitasi Newton: F = G × (m₁ × m₂) / r². Setiap benda bermassa saling tarik-menarik. Gravitasi bumi ≈ 9.8 m/s². Itulah mengapa kita tidak melayang! 🍎',en:'Newton\'s law of gravity: F = G × (m₁ × m₂) / r². Every mass attracts every other mass. Earth\'s gravity ≈ 9.8 m/s². That\'s why we don\'t float! 🍎'}},
+  {keywords:['air','water','h2o'],answer:{id:'Air (H₂O) terdiri dari 2 atom hidrogen dan 1 atom oksigen. Air mendidih pada 100°C dan membeku pada 0°C. Tubuh manusia terdiri dari ~60% air! 💧',en:'Water (H₂O) consists of 2 hydrogen atoms and 1 oxygen atom. Water boils at 100°C and freezes at 0°C. The human body is ~60% water! 💧'}},
+  {keywords:['planet','tata surya','solar system'],answer:{id:'Tata surya kita punya 8 planet: Merkurius, Venus, Bumi, Mars, Jupiter, Saturnus, Uranus, Neptunus. Jupiter adalah yang terbesar! 🪐',en:'Our solar system has 8 planets: Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, Neptune. Jupiter is the largest! 🪐'}},
+  {keywords:['dna','genetika','genetics'],answer:{id:'DNA (Deoxyribonucleic Acid) adalah molekul yang menyimpan informasi genetik. Bentuknya double helix. Manusia punya 23 pasang kromosom (46 total). DNA menentukan sifat-sifat kita! 🧬',en:'DNA (Deoxyribonucleic Acid) is a molecule that stores genetic information. It has a double helix shape. Humans have 23 pairs of chromosomes (46 total). DNA determines our traits! 🧬'}},
+  {keywords:['proklamasi','kemerdekaan','independence','1945'],answer:{id:'Proklamasi Kemerdekaan Indonesia dibacakan oleh Soekarno dan Hatta pada 17 Agustus 1945. Naskahnya diketik oleh Sayuti Melik. Ini menandai lahirnya Republik Indonesia! 🇮🇩',en:'Indonesia\'s Declaration of Independence was read by Soekarno and Hatta on August 17, 1945. The text was typed by Sayuti Melik. This marked the birth of the Republic of Indonesia! 🇮🇩'}},
+  {keywords:['motivasi','semangat','motivation'],answer:{id:'Tips motivasi belajar: 1) Tetapkan tujuan kecil yang realistis 2) Gunakan teknik Pomodoro (25 menit fokus, 5 menit istirahat) 3) Rayakan pencapaian kecil 4) Ingat alasanmu belajar. Kamu pasti bisa! 💪✨',en:'Study motivation tips: 1) Set small, realistic goals 2) Use the Pomodoro technique (25 min focus, 5 min break) 3) Celebrate small wins 4) Remember why you\'re studying. You can do it! 💪✨'}},
+  {keywords:['waktu','time management','manajemen'],answer:{id:'Tips manajemen waktu: 1) Buat jadwal harian 2) Prioritaskan tugas penting 3) Hindari multitasking 4) Gunakan timer untuk fokus 5) Istirahat teratur. Ingat, quality over quantity! ⏰',en:'Time management tips: 1) Create a daily schedule 2) Prioritize important tasks 3) Avoid multitasking 4) Use timers for focus 5) Take regular breaks. Remember, quality over quantity! ⏰'}},
+  {keywords:['matematika','math','rumus','formula'],answer:{id:'Rumus dasar matematika: Luas lingkaran = πr², Keliling = 2πr. Luas segitiga = ½ × alas × tinggi. Volume kubus = s³. Volume bola = 4/3 × π × r³ 📐',en:'Basic math formulas: Circle area = πr², Circumference = 2πr. Triangle area = ½ × base × height. Cube volume = s³. Sphere volume = 4/3 × π × r³ 📐'}},
+  {keywords:['atom','proton','electron','elektron'],answer:{id:'Atom terdiri dari: Proton (+) dan Neutron (netral) di inti, serta Elektron (-) yang mengorbit. Nomor atom = jumlah proton. Elektron menentukan sifat kimia unsur! ⚛️',en:'Atoms consist of: Protons (+) and Neutrons (neutral) in the nucleus, and Electrons (-) orbiting. Atomic number = number of protons. Electrons determine chemical properties! ⚛️'}},
+  {keywords:['perang dunia','world war','ww2','ww1'],answer:{id:'Perang Dunia II (1939-1945) melibatkan Sekutu vs Poros. Berakhir dengan penyerahan Jepang setelah bom atom di Hiroshima & Nagasaki. PBB didirikan untuk mencegah perang serupa. 🕊️',en:'World War II (1939-1945) involved Allies vs Axis. Ended with Japan\'s surrender after atomic bombs on Hiroshima & Nagasaki. The UN was founded to prevent similar wars. 🕊️'}},
+  {keywords:['ekosistem','ecosystem','rantai makanan','food chain'],answer:{id:'Ekosistem adalah komunitas organisme + lingkungannya. Rantai makanan: Produsen (tumbuhan) → Konsumen I (herbivora) → Konsumen II (karnivora) → Dekomposer. Setiap organisme punya peran! 🌍',en:'An ecosystem is a community of organisms + their environment. Food chain: Producers (plants) → Primary consumers (herbivores) → Secondary consumers (carnivores) → Decomposers. Every organism has a role! 🌍'}}
+];
+
+const flashcardData={
+  matematika:[
+    {q:'Apa rumus luas lingkaran?',a:'L = πr²'},
+    {q:'Berapa hasil dari 15² ?',a:'225'},
+    {q:'Apa itu bilangan prima?',a:'Bilangan yang hanya bisa dibagi 1 dan dirinya sendiri'},
+    {q:'Rumus volume kerucut?',a:'V = 1/3 × π × r² × t'},
+    {q:'Berapa √144?',a:'12'}
+  ],
+  math:[
+    {q:'What is the area formula for a circle?',a:'A = πr²'},
+    {q:'What is 15²?',a:'225'},
+    {q:'What is a prime number?',a:'A number divisible only by 1 and itself'},
+    {q:'Volume of a cone?',a:'V = 1/3 × π × r² × h'},
+    {q:'What is √144?',a:'12'}
+  ],
+  biologi:[
+    {q:'Apa fungsi mitokondria?',a:'Menghasilkan energi (ATP) untuk sel — "powerhouse of the cell"'},
+    {q:'Apa perbedaan DNA dan RNA?',a:'DNA: double helix, deoksiribosa. RNA: single strand, ribosa'},
+    {q:'Apa itu osmosis?',a:'Perpindahan air dari konsentrasi rendah ke tinggi melalui membran semipermeabel'},
+    {q:'Bagian sel yang mengontrol aktivitas sel?',a:'Nukleus (inti sel)'},
+    {q:'Apa fungsi klorofil?',a:'Menyerap cahaya matahari untuk fotosintesis'}
+  ],
+  biology:[
+    {q:'What is the function of mitochondria?',a:'Produces energy (ATP) — "powerhouse of the cell"'},
+    {q:'Difference between DNA and RNA?',a:'DNA: double helix, deoxyribose. RNA: single strand, ribose'},
+    {q:'What is osmosis?',a:'Movement of water from low to high concentration through a semipermeable membrane'},
+    {q:'Which part controls cell activity?',a:'Nucleus'},
+    {q:'What is the function of chlorophyll?',a:'Absorbs sunlight for photosynthesis'}
+  ],
+  fisika:[
+    {q:'Apa hukum Newton pertama?',a:'Benda diam tetap diam, benda bergerak tetap bergerak, kecuali ada gaya luar'},
+    {q:'Rumus kecepatan?',a:'v = s / t (jarak dibagi waktu)'},
+    {q:'Apa satuan gaya?',a:'Newton (N)'},
+    {q:'Rumus energi kinetik?',a:'Ek = ½mv²'},
+    {q:'Apa itu frekuensi?',a:'Jumlah getaran per detik, satuan Hertz (Hz)'}
+  ],
+  physics:[
+    {q:'What is Newton\'s first law?',a:'An object at rest stays at rest, moving stays moving, unless acted upon by external force'},
+    {q:'Speed formula?',a:'v = d / t (distance divided by time)'},
+    {q:'Unit of force?',a:'Newton (N)'},
+    {q:'Kinetic energy formula?',a:'KE = ½mv²'},
+    {q:'What is frequency?',a:'Number of vibrations per second, unit: Hertz (Hz)'}
+  ]
+};
+
+let chatHistory=JSON.parse(localStorage.getItem('lumora_chat')||'[]');
+let currentCards=[],cardIndex=0;
+
+function applyLang(){
+  document.getElementById('pageTitle').textContent=t.title;
+  document.getElementById('pageSubtitle').textContent=t.subtitle;
+  document.getElementById('tab0').textContent=t.tab0;
+  document.getElementById('tab1').textContent=t.tab1;
+  document.getElementById('tab2').textContent=t.tab2;
+  document.getElementById('chatInput').placeholder=t.chatPh;
+  document.getElementById('clearBtn').textContent=t.clear;
+  document.getElementById('summarizeInput').placeholder=t.sumPh;
+  document.getElementById('btnSummarize').textContent=t.summarize;
+  document.getElementById('keyPointsTitle').textContent=t.keyPoints;
+  document.getElementById('summaryTitle').textContent=t.summary;
+  document.getElementById('keywordsTitle').textContent=t.keywords;
+  document.getElementById('copyBtn').textContent=t.copy;
+  document.getElementById('fcTopic').placeholder=t.fcPh;
+  document.getElementById('btnGenFC').textContent=t.generate;
+  document.getElementById('btnSaveFC').textContent=t.save;
+  renderChat();
+}
+
+function switchTab(idx){
+  document.querySelectorAll('.tab').forEach((t,i)=>{t.classList.toggle('active',i===idx)});
+  document.querySelectorAll('.tab-content').forEach((c,i)=>{c.classList.toggle('active',i===idx)});
+}
+
+function renderChat(){
+  const area=document.getElementById('chatArea');
+  area.innerHTML='';
+  if(chatHistory.length===0){
+    area.innerHTML=`<div class="chat-bubble chat-ai">${t.greeting}</div>`;
+  }
+  chatHistory.forEach(msg=>{
+    area.innerHTML+=`<div class="chat-bubble ${msg.role==='user'?'chat-user':'chat-ai'}">${msg.text}</div>`;
+  });
+  area.scrollTop=area.scrollHeight;
+}
+
+function sendChat(){
+  const input=document.getElementById('chatInput');
+  const text=input.value.trim();if(!text)return;
+  chatHistory.push({role:'user',text});
+  input.value='';
+  const lower=text.toLowerCase();
+  let answer=t.noAnswer;
+  for(const qa of qaList){
+    if(qa.keywords.some(kw=>lower.includes(kw))){
+      answer=qa.answer[lang]||qa.answer.id;break;
+    }
+  }
+  setTimeout(()=>{
+    chatHistory.push({role:'ai',text:answer});
+    localStorage.setItem('lumora_chat',JSON.stringify(chatHistory));
+    renderChat();
+  },500);
+  renderChat();
+}
+
+function clearChat(){chatHistory=[];localStorage.removeItem('lumora_chat');renderChat()}
+
+function summarizeText(){
+  const text=document.getElementById('summarizeInput').value.trim();if(!text)return;
+  document.getElementById('sumLoading').classList.add('show');
+  document.getElementById('sumResult').classList.remove('show');
+  setTimeout(()=>{
+    const paragraphs=text.split(/\n\n|\n/).filter(p=>p.trim());
+    const points=paragraphs.map(p=>{
+      const sentences=p.split(/[.!?]+/).filter(s=>s.trim());
+      return sentences[0]?.trim();
+    }).filter(Boolean);
+    const words=text.toLowerCase().split(/\s+/);
+    const freq={};words.forEach(w=>{if(w.length>4)freq[w]=(freq[w]||0)+1});
+    const keywords=Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,5).map(e=>e[0]);
+    const summary=points.slice(0,3).join('. ')+'.';
+
+    const pointsList=document.getElementById('keyPoints');pointsList.innerHTML='';
+    points.forEach(p=>{const li=document.createElement('li');li.textContent=p;pointsList.appendChild(li)});
+    document.getElementById('summaryText').textContent=summary;
+    const kwList=document.getElementById('keywordsList');kwList.innerHTML='';
+    keywords.forEach(k=>{kwList.innerHTML+=`<span class="keyword">${k}</span>`});
+
+    document.getElementById('sumLoading').classList.remove('show');
+    document.getElementById('sumResult').classList.add('show');
+  },1500);
+}
+
+function copyResult(){
+  const text=document.getElementById('sumResult').innerText;
+  navigator.clipboard.writeText(text);
+  document.getElementById('copyBtn').textContent=t.copied;
+  setTimeout(()=>document.getElementById('copyBtn').textContent=t.copy,2000);
+}
+
+function generateFlashcards(){
+  const topic=document.getElementById('fcTopic').value.trim().toLowerCase();if(!topic)return;
+  document.getElementById('fcLoading').classList.add('show');
+  document.getElementById('fcContainer').style.display='none';
+  document.getElementById('fcNav').style.display='none';
+  document.getElementById('btnSaveFC').style.display='none';
+  setTimeout(()=>{
+    currentCards=flashcardData[topic]||flashcardData[lang==='id'?'matematika':'math'];
+    cardIndex=0;
+    document.getElementById('fcLoading').classList.remove('show');
+    document.getElementById('fcContainer').style.display='block';
+    document.getElementById('fcNav').style.display='flex';
+    document.getElementById('btnSaveFC').style.display='block';
+    showCard();
+  },1200);
+}
+
+function showCard(){
+  if(!currentCards.length)return;
+  const card=currentCards[cardIndex];
+  document.getElementById('fcFront').textContent=card.q;
+  document.getElementById('fcBack').textContent=card.a;
+  document.getElementById('flashcard').classList.remove('flipped');
+  document.getElementById('fcCounter').textContent=`${cardIndex+1} / ${currentCards.length}`;
+}
+
+function flipCard(){document.getElementById('flashcard').classList.toggle('flipped')}
+function nextCard(){if(cardIndex<currentCards.length-1){cardIndex++;showCard()}}
+function prevCard(){if(cardIndex>0){cardIndex--;showCard()}}
+function saveFlashcards(){
+  const saved=JSON.parse(localStorage.getItem('lumora_flashcards')||'[]');
+  saved.push({topic:document.getElementById('fcTopic').value,cards:currentCards,date:new Date().toISOString()});
+  localStorage.setItem('lumora_flashcards',JSON.stringify(saved));
+  document.getElementById('btnSaveFC').textContent=t.saved;
+  setTimeout(()=>document.getElementById('btnSaveFC').textContent=t.save,2000);
+}
+
+applyLang();
+</script>
+</body>
+</html>

@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Lumora - Profile</title>
+<script>if(localStorage.getItem('theme')==='dark')document.documentElement.classList.add('dark')</script>
+<style>
+:root{--bg:#F5F0FF;--card:#FFFFFF;--text:#4A4063}
+:root.dark{--bg:#1E1B2E;--card:#2A2640;--text:#E8D5F5}
+*{margin:0;padding:0;box-sizing:border-box}
+body{width:390px;max-width:100vw;margin:0 auto;min-height:100vh;background:var(--bg);font-family:'Segoe UI',system-ui,sans-serif;color:var(--text);padding-bottom:40px}
+.header{padding:20px;display:flex;align-items:center;justify-content:space-between}
+.header-left{display:flex;align-items:center;gap:12px}
+.back-btn{background:none;border:none;font-size:24px;cursor:pointer;color:var(--text);text-decoration:none}
+.header h1{font-size:22px;font-weight:700}
+.edit-btn{background:none;border:none;font-size:22px;cursor:pointer;color:var(--text)}
+.profile-card{text-align:center;padding:24px 20px;margin:0 20px 16px;background:var(--card);border-radius:20px;box-shadow:0 2px 8px rgba(195,166,232,0.1)}
+.avatar{width:100px;height:100px;border-radius:50%;background:linear-gradient(135deg,#C3A6E8,#A8D8EA);margin:0 auto 16px;display:flex;align-items:center;justify-content:center;font-size:40px;overflow:hidden;cursor:pointer;border:3px solid #C3A6E8}
+.avatar img{width:100%;height:100%;object-fit:cover}
+.profile-name{font-size:22px;font-weight:700;margin-bottom:4px}
+.profile-username{font-size:14px;opacity:0.6;margin-bottom:4px}
+.profile-bio{font-size:14px;opacity:0.8;margin-bottom:8px}
+.profile-since{font-size:12px;opacity:0.5}
+.mini-stats{display:flex;gap:12px;padding:0 20px;margin-bottom:16px}
+.mini-stat{flex:1;background:var(--card);border-radius:16px;padding:16px;text-align:center;box-shadow:0 2px 8px rgba(195,166,232,0.1)}
+.mini-stat .value{font-size:24px;font-weight:700;color:#C3A6E8}
+.mini-stat .label{font-size:11px;opacity:0.6;margin-top:4px}
+.info-card{background:var(--card);border-radius:16px;margin:0 20px 16px;overflow:hidden;box-shadow:0 2px 8px rgba(195,166,232,0.1)}
+.info-card .card-title{padding:16px 20px 0;font-size:14px;font-weight:600;opacity:0.5;text-transform:uppercase}
+.info-item{display:flex;justify-content:space-between;align-items:center;padding:14px 20px;border-bottom:1px solid rgba(195,166,232,0.1)}
+.info-item:last-child{border-bottom:none}
+.info-item .info-label{display:flex;align-items:center;gap:8px;font-size:14px;opacity:0.7}
+.info-item .info-value{font-size:14px;font-weight:500}
+.badges-section{margin:0 20px 16px}
+.badges-title{font-size:16px;font-weight:600;margin-bottom:12px}
+.badges-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.badge-card{background:var(--card);border-radius:14px;padding:14px;text-align:center;box-shadow:0 2px 8px rgba(195,166,232,0.1);transition:all 0.3s}
+.badge-card.locked{opacity:0.4;filter:grayscale(100%)}
+.badge-card.unlocked{box-shadow:0 4px 16px rgba(195,166,232,0.3)}
+.badge-icon{font-size:28px;margin-bottom:6px}
+.badge-name{font-size:11px;font-weight:600}
+.edit-form{display:none;margin:0 20px 16px}
+.edit-form.show{display:block}
+.edit-card{background:var(--card);border-radius:16px;padding:20px;box-shadow:0 2px 8px rgba(195,166,232,0.1)}
+.edit-card label{display:block;font-size:13px;opacity:0.7;margin-bottom:6px;margin-top:12px}
+.edit-card label:first-child{margin-top:0}
+.edit-card input,.edit-card textarea{width:100%;padding:10px 14px;border:2px solid rgba(195,166,232,0.3);border-radius:12px;font-size:14px;background:var(--bg);color:var(--text);outline:none;font-family:inherit}
+.edit-card textarea{height:60px;resize:none}
+.edit-btns{display:flex;gap:12px;margin-top:16px}
+.edit-btns button{flex:1;padding:12px;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer}
+.btn-save{background:linear-gradient(135deg,#C3A6E8,#A8D8EA);color:white}
+.btn-cancel{background:rgba(195,166,232,0.2);color:var(--text)}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header-left">
+    <a href="index.html" class="back-btn">←</a>
+    <h1 id="pageTitle"></h1>
+  </div>
+  <button class="edit-btn" onclick="toggleEdit()" id="editBtn">✏️</button>
+</div>
+
+<div id="viewMode">
+  <div class="profile-card">
+    <label for="photoInput">
+      <div class="avatar" id="avatar">👤</div>
+    </label>
+    <input type="file" id="photoInput" accept="image/*" onchange="changePhoto(event)" style="display:none">
+    <div class="profile-name" id="displayName"></div>
+    <div class="profile-username" id="displayUsername"></div>
+    <div class="profile-bio" id="displayBio"></div>
+    <div class="profile-since" id="displaySince"></div>
+  </div>
+
+  <div class="mini-stats">
+    <div class="mini-stat"><div class="value" id="statTasks">0</div><div class="label" id="lblStatTasks"></div></div>
+    <div class="mini-stat"><div class="value" id="statFocus">0</div><div class="label" id="lblStatFocus"></div></div>
+    <div class="mini-stat"><div class="value" id="statStreak">0</div><div class="label" id="lblStatStreak"></div></div>
+  </div>
+
+  <div class="info-card">
+    <div class="card-title" id="infoTitle"></div>
+    <div class="info-item"><div class="info-label">📧 <span id="lblEmail"></span></div><div class="info-value" id="infoEmail"></div></div>
+    <div class="info-item"><div class="info-label">🎂 <span id="lblDob"></span></div><div class="info-value" id="infoDob"></div></div>
+    <div class="info-item"><div class="info-label">🎯 <span id="lblTarget"></span></div><div class="info-value" id="infoTarget"></div></div>
+  </div>
+
+  <div class="badges-section">
+    <div class="badges-title" id="badgesTitle"></div>
+    <div class="badges-grid" id="badgesGrid"></div>
+  </div>
+</div>
+
+<div class="edit-form" id="editForm">
+  <div class="edit-card">
+    <label id="editLblName"></label>
+    <input type="text" id="editName">
+    <label id="editLblUsername"></label>
+    <input type="text" id="editUsername">
+    <label id="editLblBio"></label>
+    <textarea id="editBio"></textarea>
+    <label id="editLblDob"></label>
+    <input type="date" id="editDob">
+    <label id="editLblTarget"></label>
+    <input type="number" id="editTarget" min="1" max="24">
+    <div class="edit-btns">
+      <button class="btn-cancel" onclick="toggleEdit()" id="btnEditCancel"></button>
+      <button class="btn-save" onclick="saveProfile()" id="btnEditSave"></button>
+    </div>
+  </div>
+</div>
+
+<script>
+const T={
+  id:{title:'Profil 👤',tasks:'Tugas Selesai',focus:'Jam Fokus',streak:'Streak Hari',
+    info:'Informasi Pribadi',email:'Email',dob:'Tanggal Lahir',target:'Target Belajar Harian',
+    badges:'Lencana',name:'Nama',username:'Username',bio:'Bio',save:'Simpan',cancel:'Batal',
+    hours:'jam/hari',since:'Bergabung sejak',notSet:'Belum diatur',
+    badgeList:[
+      {icon:'🌟',name:'Tugas Pertama',key:'first_task'},
+      {icon:'🔥',name:'3 Hari Streak',key:'streak_3'},
+      {icon:'⏱️',name:'Focus Master',key:'focus_master'},
+      {icon:'📚',name:'Bookworm',key:'bookworm'},
+      {icon:'🌙',name:'Night Owl',key:'night_owl'},
+      {icon:'💜',name:'Lumora Fan',key:'lumora_fan'}
+    ]},
+  en:{title:'Profile 👤',tasks:'Tasks Done',focus:'Focus Hours',streak:'Day Streak',
+    info:'Personal Info',email:'Email',dob:'Date of Birth',target:'Daily Study Target',
+    badges:'Badges',name:'Name',username:'Username',bio:'Bio',save:'Save',cancel:'Cancel',
+    hours:'hrs/day',since:'Member since',notSet:'Not set',
+    badgeList:[
+      {icon:'🌟',name:'First Task',key:'first_task'},
+      {icon:'🔥',name:'3 Day Streak',key:'streak_3'},
+      {icon:'⏱️',name:'Focus Master',key:'focus_master'},
+      {icon:'📚',name:'Bookworm',key:'bookworm'},
+      {icon:'🌙',name:'Night Owl',key:'night_owl'},
+      {icon:'💜',name:'Lumora Fan',key:'lumora_fan'}
+    ]}
+};
+const lang=localStorage.getItem('lang')||'id';const t=T[lang]||T.id;
+let auth=JSON.parse(localStorage.getItem('lumora_auth')||'null');
+if(!auth)window.location.href='login.html';
+let editing=false;
+
+function applyLang(){
+  document.getElementById('pageTitle').textContent=t.title;
+  document.getElementById('lblStatTasks').textContent=t.tasks;
+  document.getElementById('lblStatFocus').textContent=t.focus;
+  document.getElementById('lblStatStreak').textContent=t.streak;
+  document.getElementById('infoTitle').textContent=t.info;
+  document.getElementById('lblEmail').textContent=t.email;
+  document.getElementById('lblDob').textContent=t.dob;
+  document.getElementById('lblTarget').textContent=t.target;
+  document.getElementById('badgesTitle').textContent=t.badges;
+  document.getElementById('editLblName').textContent=t.name;
+  document.getElementById('editLblUsername').textContent=t.username;
+  document.getElementById('editLblBio').textContent=t.bio;
+  document.getElementById('editLblDob').textContent=t.dob;
+  document.getElementById('editLblTarget').textContent=t.target+' ('+t.hours+')';
+  document.getElementById('btnEditCancel').textContent=t.cancel;
+  document.getElementById('btnEditSave').textContent=t.save;
+  loadProfile();renderBadges();
+}
+
+function loadProfile(){
+  document.getElementById('displayName').textContent=auth.name||'';
+  document.getElementById('displayUsername').textContent=auth.username||'';
+  document.getElementById('displayBio').textContent=auth.bio||'';
+  const joinDate=auth.joinDate?new Date(auth.joinDate).toLocaleDateString(lang==='id'?'id-ID':'en-US',{year:'numeric',month:'long'}):'';
+  document.getElementById('displaySince').textContent=joinDate?t.since+' '+joinDate:'';
+  document.getElementById('infoEmail').textContent=auth.email||'';
+  document.getElementById('infoDob').textContent=auth.dob||t.notSet;
+  document.getElementById('infoTarget').textContent=(auth.dailyTarget||'2')+' '+t.hours;
+  if(auth.photo){document.getElementById('avatar').innerHTML='<img src="'+auth.photo+'" alt="avatar">'}
+
+  const tasks=JSON.parse(localStorage.getItem('lumora_tasks')||'[]');
+  const sessions=JSON.parse(localStorage.getItem('lumora_sessions')||'[]');
+  const doneTasks=tasks.filter(t=>t.done);
+  document.getElementById('statTasks').textContent=doneTasks.length;
+  const totalSec=sessions.reduce((a,s)=>a+s.seconds,0);
+  document.getElementById('statFocus').textContent=Math.round(totalSec/3600*10)/10;
+
+  let streak=0;
+  const today=new Date();today.setHours(0,0,0,0);
+  for(let i=0;i<30;i++){
+    const d=new Date(today);d.setDate(d.getDate()-i);
+    const dayStr=d.toISOString().split('T')[0];
+    const has=sessions.some(s=>s.date.startsWith(dayStr))||tasks.some(t=>t.done&&t.createdAt&&t.createdAt.startsWith(dayStr));
+    if(has)streak++;else if(i>0)break;
+  }
+  document.getElementById('statStreak').textContent=streak;
+}
+
+function renderBadges(){
+  const tasks=JSON.parse(localStorage.getItem('lumora_tasks')||'[]');
+  const sessions=JSON.parse(localStorage.getItem('lumora_sessions')||'[]');
+  const doneTasks=tasks.filter(t=>t.done).length;
+  const totalSec=sessions.reduce((a,s)=>a+s.seconds,0);
+  const totalHrs=totalSec/3600;
+
+  let streak=0;
+  const today=new Date();today.setHours(0,0,0,0);
+  for(let i=0;i<30;i++){
+    const d=new Date(today);d.setDate(d.getDate()-i);
+    const dayStr=d.toISOString().split('T')[0];
+    const has=sessions.some(s=>s.date.startsWith(dayStr))||tasks.some(t=>t.done&&t.createdAt&&t.createdAt.startsWith(dayStr));
+    if(has)streak++;else if(i>0)break;
+  }
+
+  const nightSessions=sessions.filter(s=>{const h=new Date(s.date).getHours();return h>=22||h<5}).length;
+  const unlockMap={
+    first_task:doneTasks>=1,
+    streak_3:streak>=3,
+    focus_master:totalHrs>=5,
+    bookworm:doneTasks>=10,
+    night_owl:nightSessions>=3,
+    lumora_fan:sessions.length>=10
+  };
+
+  const grid=document.getElementById('badgesGrid');grid.innerHTML='';
+  t.badgeList.forEach(b=>{
+    const unlocked=unlockMap[b.key]||false;
+    grid.innerHTML+=`<div class="badge-card ${unlocked?'unlocked':'locked'}"><div class="badge-icon">${b.icon}</div><div class="badge-name">${b.name}</div></div>`;
+  });
+}
+
+function toggleEdit(){
+  editing=!editing;
+  if(editing){
+    document.getElementById('viewMode').style.display='none';
+    document.getElementById('editForm').classList.add('show');
+    document.getElementById('editName').value=auth.name||'';
+    document.getElementById('editUsername').value=auth.username||'';
+    document.getElementById('editBio').value=auth.bio||'';
+    document.getElementById('editDob').value=auth.dob||'';
+    document.getElementById('editTarget').value=auth.dailyTarget||'2';
+  }else{
+    document.getElementById('viewMode').style.display='block';
+    document.getElementById('editForm').classList.remove('show');
+  }
+}
+
+function saveProfile(){
+  auth.name=document.getElementById('editName').value.trim();
+  auth.username=document.getElementById('editUsername').value.trim();
+  auth.bio=document.getElementById('editBio').value.trim();
+  auth.dob=document.getElementById('editDob').value;
+  auth.dailyTarget=document.getElementById('editTarget').value;
+  localStorage.setItem('lumora_auth',JSON.stringify(auth));
+  const users=JSON.parse(localStorage.getItem('lumora_users')||'[]');
+  const idx=users.findIndex(u=>u.email===auth.email);
+  if(idx>=0){users[idx]=auth;localStorage.setItem('lumora_users',JSON.stringify(users))}
+  toggleEdit();loadProfile();
+}
+
+function changePhoto(e){
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(ev){
+    auth.photo=ev.target.result;
+    localStorage.setItem('lumora_auth',JSON.stringify(auth));
+    const users=JSON.parse(localStorage.getItem('lumora_users')||'[]');
+    const idx=users.findIndex(u=>u.email===auth.email);
+    if(idx>=0){users[idx]=auth;localStorage.setItem('lumora_users',JSON.stringify(users))}
+    document.getElementById('avatar').innerHTML='<img src="'+auth.photo+'" alt="avatar">';
+  };
+  reader.readAsDataURL(file);
+}
+
+applyLang();
+</script>
+</body>
+</html>

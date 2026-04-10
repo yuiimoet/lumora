@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Lumora - App Lock</title>
+<script>if(localStorage.getItem('theme')==='dark')document.documentElement.classList.add('dark')</script>
+<style>
+:root{--bg:#F5F0FF;--card:#FFFFFF;--text:#4A4063}
+:root.dark{--bg:#1E1B2E;--card:#2A2640;--text:#E8D5F5}
+*{margin:0;padding:0;box-sizing:border-box}
+body{width:390px;max-width:100vw;margin:0 auto;min-height:100vh;background:var(--bg);font-family:'Segoe UI',system-ui,sans-serif;color:var(--text);padding-bottom:40px}
+.header{padding:20px;display:flex;align-items:center;gap:12px}
+.back-btn{background:none;border:none;font-size:24px;cursor:pointer;color:var(--text);text-decoration:none}
+.header h1{font-size:22px;font-weight:700}
+.subtitle{padding:0 20px;font-size:13px;opacity:0.6;margin-bottom:20px}
+.card{background:var(--card);border-radius:16px;padding:20px;margin:0 20px 16px;box-shadow:0 2px 8px rgba(195,166,232,0.1)}
+.card-title{font-size:16px;font-weight:600;margin-bottom:16px}
+.toggle-row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid rgba(195,166,232,0.1)}
+.toggle-row:last-child{border-bottom:none}
+.toggle-label{display:flex;align-items:center;gap:10px;font-size:15px}
+.toggle{width:52px;height:28px;border-radius:14px;background:rgba(195,166,232,0.3);position:relative;cursor:pointer;transition:background 0.3s;border:none}
+.toggle.on{background:#27ae60}
+.toggle.off{background:#e74c3c}
+.toggle::after{content:'';width:24px;height:24px;border-radius:50%;background:white;position:absolute;top:2px;left:2px;transition:left 0.3s}
+.toggle.on::after{left:26px}
+.big-toggle{text-align:center;padding:20px}
+.big-toggle .toggle{width:72px;height:38px;margin:0 auto;display:block}
+.big-toggle .toggle::after{width:34px;height:34px;top:2px;left:2px}
+.big-toggle .toggle.on::after{left:36px}
+.big-toggle-label{margin-top:12px;font-size:18px;font-weight:600}
+.duration-pills{display:flex;gap:8px;flex-wrap:wrap}
+.pill{padding:10px 18px;border-radius:20px;border:2px solid rgba(195,166,232,0.3);background:var(--bg);cursor:pointer;font-size:14px;color:var(--text);transition:all 0.3s}
+.pill.active{background:linear-gradient(135deg,#C3A6E8,#A8D8EA);color:white;border-color:transparent}
+.custom-input{display:none;margin-top:12px}
+.custom-input input{width:100%;padding:10px 16px;border:2px solid rgba(195,166,232,0.3);border-radius:12px;font-size:15px;background:var(--bg);color:var(--text);outline:none}
+.focus-active{text-align:center;padding:30px 20px}
+.focus-active .countdown{font-size:56px;font-weight:700;color:#C3A6E8;margin:16px 0}
+.focus-active .msg{font-size:16px;margin-bottom:8px}
+.focus-active .motivate{font-size:14px;opacity:0.7;margin-bottom:20px}
+.btn-stop{padding:14px 40px;border:none;border-radius:14px;font-size:16px;font-weight:600;color:white;background:#e74c3c;cursor:pointer}
+.confirm-popup{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:200;align-items:center;justify-content:center}
+.confirm-popup.show{display:flex}
+.confirm-box{background:var(--card);border-radius:20px;padding:24px;width:300px;text-align:center}
+.confirm-box p{margin-bottom:20px;font-size:15px}
+.confirm-btns{display:flex;gap:12px}
+.confirm-btns button{flex:1;padding:12px;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer}
+.btn-confirm{background:#e74c3c;color:white}
+.btn-cancel{background:rgba(195,166,232,0.2);color:var(--text)}
+.locked-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:var(--bg);z-index:300;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px}
+.locked-overlay.show{display:flex}
+.locked-overlay img{width:100px;margin-bottom:20px}
+.locked-overlay .lock-msg{font-size:20px;font-weight:600;margin-bottom:8px}
+.locked-overlay .lock-countdown{font-size:48px;font-weight:700;color:#C3A6E8;margin:20px 0}
+.locked-overlay .lock-quote{font-size:14px;opacity:0.7;margin-bottom:24px;font-style:italic}
+.emergency-btn{padding:10px 24px;border:2px solid rgba(195,166,232,0.3);border-radius:12px;background:transparent;color:var(--text);cursor:pointer;font-size:13px}
+.pin-input{display:none;margin-top:12px}
+.pin-input input{width:120px;padding:8px;border:2px solid rgba(195,166,232,0.3);border-radius:10px;text-align:center;font-size:18px;background:var(--bg);color:var(--text);outline:none}
+</style>
+</head>
+<body>
+<div class="header">
+  <a href="index.html" class="back-btn">←</a>
+  <h1 id="pageTitle"></h1>
+</div>
+<div class="subtitle" id="pageSubtitle"></div>
+
+<div class="card">
+  <div class="big-toggle">
+    <button class="toggle" id="focusToggle" onclick="toggleFocus()"></button>
+    <div class="big-toggle-label" id="focusLabel"></div>
+  </div>
+</div>
+
+<div class="card" id="durationCard">
+  <div class="card-title" id="durationTitle"></div>
+  <div class="duration-pills" id="durationPills"></div>
+  <div class="custom-input" id="customInput">
+    <input type="number" id="customMinutes" placeholder="Minutes" min="1" max="180">
+  </div>
+</div>
+
+<div class="card" id="focusActiveCard" style="display:none">
+  <div class="focus-active">
+    <div class="msg" id="focusMsg"></div>
+    <div class="countdown" id="focusCountdown">00:00</div>
+    <div class="motivate" id="focusMotivate"></div>
+    <button class="btn-stop" id="btnStopFocus" onclick="showConfirm()"></button>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-title" id="blockedTitle"></div>
+  <div id="blockedList"></div>
+</div>
+
+<div class="card">
+  <div class="card-title" id="whitelistTitle"></div>
+  <div id="whitelistList"></div>
+</div>
+
+<div class="confirm-popup" id="confirmPopup">
+  <div class="confirm-box">
+    <p id="confirmMsg"></p>
+    <div class="confirm-btns">
+      <button class="btn-cancel" onclick="hideConfirm()" id="btnCancelStop"></button>
+      <button class="btn-confirm" onclick="stopFocusMode()" id="btnConfirmStop"></button>
+    </div>
+  </div>
+</div>
+
+<div class="locked-overlay" id="lockedOverlay">
+  <img src="logo.png" alt="Lumora">
+  <div class="lock-msg" id="lockMsg"></div>
+  <div class="lock-countdown" id="lockCountdown">00:00</div>
+  <div class="lock-quote" id="lockQuote"></div>
+  <button class="emergency-btn" onclick="showPinInput()" id="emergencyBtn"></button>
+  <div class="pin-input" id="pinInput">
+    <input type="password" id="pinField" maxlength="4" placeholder="PIN">
+    <button onclick="checkPin()" style="margin-top:8px;padding:8px 20px;border:none;border-radius:10px;background:#C3A6E8;color:white;cursor:pointer">OK</button>
+  </div>
+</div>
+
+<script>
+const T={
+  id:{title:'Kunci Aplikasi 🔒',subtitle:'Tetap fokus, blokir gangguan',focusOn:'Mode Fokus AKTIF',focusOff:'Mode Fokus NONAKTIF',
+    duration:'Durasi Kunci',min25:'25 mnt',min45:'45 mnt',hour1:'1 jam',custom:'Kustom',
+    blocked:'Aplikasi Diblokir',whitelist:'Daftar Putih',stop:'Berhenti',
+    confirmMsg:'Yakin ingin menghentikan mode fokus?',cancel:'Batal',confirm:'Ya, Hentikan',
+    lockMsg:'Kamu sedang dalam mode fokus 🌙',motivate:'Tetap kuat, kamu bisa! ✨',
+    emergency:'Keluar Darurat (PIN)',focusActive:'Mode fokus aktif 🌙',stayStrong:'Tetap kuat, kamu bisa! ✨',
+    quotes:['Fokus adalah kunci kesuksesan 🌟','Setiap menit berharga ⏰','Kamu lebih kuat dari gangguan 💪','Tetap pada jalurmu 🎯']},
+  en:{title:'App Lock 🔒',subtitle:'Stay focused, block distractions',focusOn:'Focus Mode ON',focusOff:'Focus Mode OFF',
+    duration:'Lock Duration',min25:'25 min',min45:'45 min',hour1:'1 hour',custom:'Custom',
+    blocked:'Blocked Apps',whitelist:'Whitelist',stop:'Stop',
+    confirmMsg:'Are you sure you want to stop focus mode?',cancel:'Cancel',confirm:'Yes, Stop',
+    lockMsg:"You're in focus mode 🌙",motivate:'Stay strong, you got this! ✨',
+    emergency:'Emergency Exit (PIN)',focusActive:'Focus mode active 🌙',stayStrong:'Stay strong, you got this! ✨',
+    quotes:['Focus is the key to success 🌟','Every minute counts ⏰','You are stronger than distractions 💪','Stay on track 🎯']}
+};
+const lang=localStorage.getItem('lang')||'id';const t=T[lang]||T.id;
+
+const blockedApps=[
+  {name:'Instagram',icon:'📷',key:'block_instagram'},
+  {name:'TikTok',icon:'🎵',key:'block_tiktok'},
+  {name:'YouTube',icon:'📺',key:'block_youtube'},
+  {name:'Twitter/X',icon:'🐦',key:'block_twitter'},
+  {name:'Facebook',icon:'📘',key:'block_facebook'},
+  {name:'WhatsApp',icon:'💬',key:'block_whatsapp'}
+];
+const whitelistApps=[
+  {name:'Phone',icon:'📞',key:'allow_phone'},
+  {name:'Messages',icon:'💌',key:'allow_messages'},
+  {name:'Maps',icon:'🗺️',key:'allow_maps'},
+  {name:'Camera',icon:'📸',key:'allow_camera'}
+];
+
+let focusActive=localStorage.getItem('focus_active')==='true';
+let focusDuration=parseInt(localStorage.getItem('focus_duration')||'25');
+let focusEndTime=parseInt(localStorage.getItem('focus_end_time')||'0');
+let selectedDuration=focusDuration;
+let focusInterval=null;
+
+function applyLang(){
+  document.getElementById('pageTitle').textContent=t.title;
+  document.getElementById('pageSubtitle').textContent=t.subtitle;
+  document.getElementById('durationTitle').textContent=t.duration;
+  document.getElementById('blockedTitle').textContent=t.blocked;
+  document.getElementById('whitelistTitle').textContent=t.whitelist;
+  document.getElementById('confirmMsg').textContent=t.confirmMsg;
+  document.getElementById('btnCancelStop').textContent=t.cancel;
+  document.getElementById('btnConfirmStop').textContent=t.confirm;
+  document.getElementById('lockMsg').textContent=t.lockMsg;
+  document.getElementById('emergencyBtn').textContent=t.emergency;
+  document.getElementById('btnStopFocus').textContent=t.stop;
+  document.getElementById('focusMsg').textContent=t.focusActive;
+  document.getElementById('focusMotivate').textContent=t.stayStrong;
+  renderDurationPills();renderBlockedApps();renderWhitelistApps();updateFocusUI();
+}
+
+function renderDurationPills(){
+  const c=document.getElementById('durationPills');
+  const durations=[{label:t.min25,val:25},{label:t.min45,val:45},{label:t.hour1,val:60},{label:t.custom,val:'custom'}];
+  c.innerHTML='';
+  durations.forEach(d=>{
+    const pill=document.createElement('button');pill.className='pill'+(selectedDuration===d.val?' active':'');
+    pill.textContent=d.label;
+    pill.onclick=()=>{
+      selectedDuration=d.val;
+      if(d.val==='custom'){document.getElementById('customInput').style.display='block'}
+      else{document.getElementById('customInput').style.display='none';focusDuration=d.val}
+      renderDurationPills();
+    };
+    c.appendChild(pill);
+  });
+}
+
+function renderBlockedApps(){
+  const c=document.getElementById('blockedList');c.innerHTML='';
+  blockedApps.forEach(app=>{
+    const blocked=localStorage.getItem(app.key)!=='false';
+    c.innerHTML+=`<div class="toggle-row"><div class="toggle-label"><span>${app.icon}</span>${app.name}</div><button class="toggle ${blocked?'off':'on'}" onclick="toggleApp('${app.key}',this)"></button></div>`;
+  });
+}
+
+function renderWhitelistApps(){
+  const c=document.getElementById('whitelistList');c.innerHTML='';
+  whitelistApps.forEach(app=>{
+    const allowed=localStorage.getItem(app.key)!=='false';
+    c.innerHTML+=`<div class="toggle-row"><div class="toggle-label"><span>${app.icon}</span>${app.name}</div><button class="toggle ${allowed?'on':'off'}" onclick="toggleApp('${app.key}',this)"></button></div>`;
+  });
+}
+
+function toggleApp(key,btn){
+  const current=localStorage.getItem(key)!=='false';
+  localStorage.setItem(key,current?'false':'true');
+  btn.className='toggle '+(current?'on':'off');
+  if(!current){btn.className='toggle off'}else{btn.className='toggle on'}
+  renderBlockedApps();renderWhitelistApps();
+}
+
+function toggleFocus(){
+  if(!focusActive){startFocusMode()}else{showConfirm()}
+}
+
+function startFocusMode(){
+  if(selectedDuration==='custom'){
+    const custom=parseInt(document.getElementById('customMinutes').value);
+    if(!custom||custom<1)return;focusDuration=custom;
+  }
+  focusActive=true;
+  focusEndTime=Date.now()+focusDuration*60*1000;
+  localStorage.setItem('focus_active','true');
+  localStorage.setItem('focus_duration',focusDuration);
+  localStorage.setItem('focus_end_time',focusEndTime);
+  updateFocusUI();startCountdown();
+}
+
+function stopFocusMode(){
+  focusActive=false;
+  localStorage.setItem('focus_active','false');
+  localStorage.removeItem('focus_end_time');
+  clearInterval(focusInterval);
+  hideConfirm();
+  document.getElementById('lockedOverlay').classList.remove('show');
+  updateFocusUI();
+}
+
+function updateFocusUI(){
+  const toggle=document.getElementById('focusToggle');
+  const label=document.getElementById('focusLabel');
+  if(focusActive){
+    toggle.className='toggle on';label.textContent=t.focusOn;
+    document.getElementById('durationCard').style.display='none';
+    document.getElementById('focusActiveCard').style.display='block';
+    startCountdown();
+  }else{
+    toggle.className='toggle';label.textContent=t.focusOff;
+    document.getElementById('durationCard').style.display='block';
+    document.getElementById('focusActiveCard').style.display='none';
+  }
+}
+
+function startCountdown(){
+  clearInterval(focusInterval);
+  function update(){
+    const remaining=Math.max(0,focusEndTime-Date.now());
+    if(remaining<=0){stopFocusMode();return}
+    const mins=Math.floor(remaining/60000);const secs=Math.floor((remaining%60000)/1000);
+    const display=String(mins).padStart(2,'0')+':'+String(secs).padStart(2,'0');
+    document.getElementById('focusCountdown').textContent=display;
+    document.getElementById('lockCountdown').textContent=display;
+    const quote=t.quotes[Math.floor(Date.now()/10000)%t.quotes.length];
+    document.getElementById('lockQuote').textContent=quote;
+  }
+  update();focusInterval=setInterval(update,1000);
+}
+
+function showConfirm(){document.getElementById('confirmPopup').classList.add('show')}
+function hideConfirm(){document.getElementById('confirmPopup').classList.remove('show')}
+function showPinInput(){document.getElementById('pinInput').style.display='block'}
+function checkPin(){
+  const pin=document.getElementById('pinField').value;
+  if(pin==='1234'){stopFocusMode()}else{alert('Wrong PIN!')}
+}
+
+if(focusActive&&focusEndTime>Date.now()){startCountdown()}else if(focusActive){stopFocusMode()}
+applyLang();
+</script>
+</body>
+</html>

@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Lumora - Home</title>
+<script>if(localStorage.getItem('theme')==='dark')document.documentElement.classList.add('dark')</script>
+<script>if(!localStorage.getItem('lumora_auth')&&!localStorage.getItem('lumora_visited')){localStorage.setItem('lumora_visited','1');window.location.href='splash.html'}</script>
+<style>
+:root{--bg:#F5F0FF;--card:#FFFFFF;--text:#4A4063}
+:root.dark{--bg:#1E1B2E;--card:#2A2640;--text:#E8D5F5}
+*{margin:0;padding:0;box-sizing:border-box}
+body{width:390px;max-width:100vw;margin:0 auto;min-height:100vh;background:var(--bg);font-family:'Segoe UI',system-ui,sans-serif;color:var(--text);padding-bottom:80px}
+.header{display:flex;justify-content:space-between;align-items:center;padding:20px 20px 0}
+.header-left h2{font-size:14px;opacity:0.7;font-weight:400}
+.header-left h1{font-size:20px;font-weight:700}
+.profile-pic{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#C3A6E8,#A8D8EA);display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;border:2px solid #C3A6E8}
+.profile-pic img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.hero{margin:20px;border-radius:20px;padding:24px;background:linear-gradient(135deg,#E8D5F5,#C3A6E8,#A8D8EA);position:relative;overflow:hidden;text-align:center}
+.hero-decor{position:absolute;font-size:24px;opacity:0.4}
+.hero .moon{top:10px;right:20px;font-size:32px;opacity:0.6}
+.hero .star1{top:15px;left:20px}.hero .star2{bottom:15px;right:40px}.hero .cloud1{bottom:10px;left:15px;font-size:28px}
+.stopwatch{font-size:48px;font-weight:700;color:white;text-shadow:0 2px 8px rgba(0,0,0,0.15);margin:12px 0;font-variant-numeric:tabular-nums}
+.sw-controls{display:flex;gap:10px;justify-content:center}
+.sw-btn{padding:10px 24px;border:none;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;color:white;transition:transform 0.2s}
+.sw-btn:active{transform:scale(0.95)}
+.sw-start{background:#27ae60}.sw-stop{background:#e74c3c}.sw-reset{background:rgba(255,255,255,0.3)}
+.menu-grid{display:flex;gap:12px;padding:0 20px;overflow-x:auto;scrollbar-width:none}
+.menu-grid::-webkit-scrollbar{display:none}
+.menu-item{flex-shrink:0;width:64px;height:64px;background:#2A2640;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:28px;cursor:pointer;transition:transform 0.2s;text-decoration:none}
+.menu-item:active{transform:scale(0.92)}
+.section-title{padding:20px 20px 12px;font-size:16px;font-weight:600}
+.history-list{padding:0 20px}
+.history-item{background:var(--card);border-radius:14px;padding:14px 16px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 2px 8px rgba(195,166,232,0.1)}
+.history-item .time{font-weight:600;font-size:15px}
+.history-item .date{font-size:12px;opacity:0.6}
+.history-item .duration{font-size:14px;font-weight:600}
+.history-item.good .duration{color:#27ae60}
+.history-item.bad .duration{color:#e74c3c}
+.bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:390px;max-width:100vw;background:var(--card);display:flex;justify-content:space-around;align-items:center;padding:12px 0 20px;border-top:1px solid rgba(195,166,232,0.2);z-index:100}
+.nav-item{display:flex;flex-direction:column;align-items:center;font-size:11px;color:var(--text);opacity:0.6;cursor:pointer;text-decoration:none;background:none;border:none}
+.nav-item.active{opacity:1;color:#C3A6E8}
+.nav-item span{font-size:24px;margin-bottom:2px}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header-left">
+    <h2 id="welcomeText"></h2>
+    <h1 id="userName"></h1>
+  </div>
+  <a href="profile.html" class="profile-pic" id="profilePic">
+    <span style="color:white;font-size:20px">👤</span>
+  </a>
+</div>
+
+<div class="hero">
+  <span class="hero-decor moon">🌙</span>
+  <span class="hero-decor star1">⭐</span>
+  <span class="hero-decor star2">✨</span>
+  <span class="hero-decor cloud1">☁️</span>
+  <div class="stopwatch" id="stopwatch">00:00:00</div>
+  <div class="sw-controls">
+    <button class="sw-btn sw-start" id="btnStart" onclick="startSW()"></button>
+    <button class="sw-btn sw-stop" id="btnStop" onclick="stopSW()" style="display:none"></button>
+    <button class="sw-btn sw-reset" id="btnReset" onclick="resetSW()"></button>
+  </div>
+</div>
+
+<div class="menu-grid">
+  <a href="todo.html" class="menu-item">📋</a>
+  <a href="statistics.html" class="menu-item">📊</a>
+  <a href="applock.html" class="menu-item">🔒</a>
+  <a href="folder.html" class="menu-item">📁</a>
+  <a href="ai.html" class="menu-item">🤖</a>
+</div>
+
+<div class="section-title" id="historyTitle"></div>
+<div class="history-list" id="historyList"></div>
+
+<div class="bottom-nav">
+  <button class="nav-item" onclick="history.back()"><span>←</span><span id="navBack"></span></button>
+  <button class="nav-item active"><span>🏠</span><span id="navHome"></span></button>
+  <a href="settings.html" class="nav-item"><span>⚙️</span><span id="navSettings"></span></a>
+</div>
+
+<script>
+const T={
+  id:{welcome:'Selamat datang',start:'MULAI',stop:'BERHENTI',reset:'RESET',history:'Riwayat',back:'Kembali',home:'Beranda',settings:'Pengaturan'},
+  en:{welcome:'Welcome back',start:'START',stop:'STOP',reset:'RESET',history:'History',back:'Back',home:'Home',settings:'Settings'}
+};
+const lang=localStorage.getItem('lang')||'id';
+const t=T[lang]||T.id;
+
+const auth=JSON.parse(localStorage.getItem('lumora_auth')||'null');
+if(!auth)window.location.href='login.html';
+
+document.getElementById('welcomeText').textContent=t.welcome;
+document.getElementById('userName').textContent=auth?auth.name:'';
+document.getElementById('btnStart').textContent=t.start;
+document.getElementById('btnReset').textContent=t.reset;
+document.getElementById('historyTitle').textContent=t.history;
+document.getElementById('navBack').textContent=t.back;
+document.getElementById('navHome').textContent=t.home;
+document.getElementById('navSettings').textContent=t.settings;
+
+if(auth&&auth.photo){
+  document.getElementById('profilePic').innerHTML='<img src="'+auth.photo+'" alt="profile">';
+}
+
+let swInterval=null,swSeconds=0,swRunning=false;
+function pad(n){return n.toString().padStart(2,'0')}
+function updateDisplay(){
+  const h=Math.floor(swSeconds/3600);
+  const m=Math.floor((swSeconds%3600)/60);
+  const s=swSeconds%60;
+  document.getElementById('stopwatch').textContent=pad(h)+':'+pad(m)+':'+pad(s);
+}
+function startSW(){
+  if(swRunning)return;swRunning=true;
+  document.getElementById('btnStart').style.display='none';
+  document.getElementById('btnStop').style.display='inline-block';
+  document.getElementById('btnStop').textContent=t.stop;
+  swInterval=setInterval(()=>{swSeconds++;updateDisplay()},1000);
+}
+function stopSW(){
+  if(!swRunning)return;swRunning=false;
+  clearInterval(swInterval);
+  document.getElementById('btnStop').style.display='none';
+  document.getElementById('btnStart').style.display='inline-block';
+  if(swSeconds>0){
+    const sessions=JSON.parse(localStorage.getItem('lumora_sessions')||'[]');
+    sessions.unshift({seconds:swSeconds,date:new Date().toISOString()});
+    localStorage.setItem('lumora_sessions',JSON.stringify(sessions));
+    renderHistory();
+  }
+}
+function resetSW(){
+  swRunning=false;clearInterval(swInterval);swSeconds=0;updateDisplay();
+  document.getElementById('btnStop').style.display='none';
+  document.getElementById('btnStart').style.display='inline-block';
+}
+
+function renderHistory(){
+  const sessions=JSON.parse(localStorage.getItem('lumora_sessions')||'[]');
+  const list=document.getElementById('historyList');
+  list.innerHTML='';
+  sessions.slice(0,10).forEach(s=>{
+    const cls=s.seconds>=60?'good':'bad';
+    const h=Math.floor(s.seconds/3600),m=Math.floor((s.seconds%3600)/60),sec=s.seconds%60;
+    const dur=pad(h)+':'+pad(m)+':'+pad(sec);
+    const d=new Date(s.date);
+    const dateStr=d.toLocaleDateString()+ ' '+d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+    list.innerHTML+=`<div class="history-item ${cls}"><div><div class="time">${dur}</div><div class="date">${dateStr}</div></div><div class="duration">${cls==='good'?'✅':'⚠️'}</div></div>`;
+  });
+}
+renderHistory();
+</script>
+</body>
+</html>

@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Lumora - Folders</title>
+<script>if(localStorage.getItem('theme')==='dark')document.documentElement.classList.add('dark')</script>
+<style>
+:root{--bg:#F5F0FF;--card:#FFFFFF;--text:#4A4063}
+:root.dark{--bg:#1E1B2E;--card:#2A2640;--text:#E8D5F5}
+*{margin:0;padding:0;box-sizing:border-box}
+body{width:390px;max-width:100vw;margin:0 auto;min-height:100vh;background:var(--bg);font-family:'Segoe UI',system-ui,sans-serif;color:var(--text);padding-bottom:40px}
+.header{padding:20px;display:flex;align-items:center;gap:12px}
+.back-btn{background:none;border:none;font-size:24px;cursor:pointer;color:var(--text);text-decoration:none}
+.header h1{font-size:22px;font-weight:700;flex:1}
+.add-btn{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#C3A6E8,#A8D8EA);border:none;font-size:22px;color:white;cursor:pointer}
+.search-bar{margin:0 20px 16px;position:relative}
+.search-bar input{width:100%;padding:12px 16px 12px 40px;border:2px solid rgba(195,166,232,0.2);border-radius:14px;font-size:15px;background:var(--card);color:var(--text);outline:none}
+.search-bar input:focus{border-color:#C3A6E8}
+.search-bar::before{content:'🔍';position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:16px}
+.section-title{padding:0 20px;font-size:14px;font-weight:600;opacity:0.6;margin-bottom:12px}
+.pinned-scroll{display:flex;gap:12px;padding:0 20px;overflow-x:auto;scrollbar-width:none;margin-bottom:20px}
+.pinned-scroll::-webkit-scrollbar{display:none}
+.pinned-card{flex-shrink:0;width:130px;background:var(--card);border-radius:16px;padding:16px;text-align:center;box-shadow:0 2px 8px rgba(195,166,232,0.1);cursor:pointer}
+.pinned-card .folder-icon{font-size:32px;margin-bottom:8px}
+.pinned-card .folder-name{font-size:14px;font-weight:600;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pinned-card .folder-count{font-size:12px;opacity:0.6}
+.pinned-card .folder-subject{font-size:11px;padding:2px 8px;border-radius:8px;background:rgba(195,166,232,0.15);display:inline-block;margin-top:4px}
+.folder-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 20px}
+.folder-card{background:var(--card);border-radius:16px;padding:16px;text-align:center;box-shadow:0 2px 8px rgba(195,166,232,0.1);cursor:pointer;position:relative}
+.folder-card .folder-icon{font-size:36px;margin-bottom:8px}
+.folder-card .folder-name{font-size:14px;font-weight:600;margin-bottom:4px}
+.folder-card .folder-count{font-size:12px;opacity:0.6}
+.folder-card .folder-subject{font-size:11px;padding:2px 8px;border-radius:8px;background:rgba(195,166,232,0.15);display:inline-block;margin-top:4px}
+.overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.4);z-index:200}
+.overlay.show{display:block}
+.popup{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:340px;background:var(--card);border-radius:20px;padding:24px;z-index:201;display:none}
+.popup.show{display:block}
+.popup-title{font-size:18px;font-weight:600;margin-bottom:20px}
+.popup input{width:100%;padding:12px 16px;border:2px solid rgba(195,166,232,0.3);border-radius:12px;font-size:15px;margin-bottom:12px;background:var(--bg);color:var(--text);outline:none}
+.color-picker{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.color-dot{width:32px;height:32px;border-radius:50%;cursor:pointer;border:3px solid transparent}
+.color-dot.active{border-color:var(--text)}
+.btn-save{width:100%;padding:14px;border:none;border-radius:14px;font-size:16px;font-weight:600;color:white;background:linear-gradient(135deg,#C3A6E8,#A8D8EA);cursor:pointer}
+.context-menu{position:fixed;background:var(--card);border-radius:14px;padding:8px;box-shadow:0 4px 20px rgba(0,0,0,0.15);z-index:250;display:none}
+.context-menu.show{display:block}
+.context-item{padding:10px 16px;border-radius:8px;cursor:pointer;font-size:14px;display:flex;align-items:center;gap:8px}
+.context-item:hover{background:rgba(195,166,232,0.1)}
+.folder-view{display:none}
+.folder-view.show{display:block}
+.folder-view-header{padding:20px;display:flex;align-items:center;gap:12px}
+.file-list{padding:0 20px}
+.file-item{background:var(--card);border-radius:14px;padding:14px 16px;margin-bottom:8px;display:flex;align-items:center;gap:12px;box-shadow:0 2px 8px rgba(195,166,232,0.1)}
+.file-icon{font-size:24px}
+.file-info{flex:1}
+.file-name{font-size:14px;font-weight:500}
+.file-meta{font-size:12px;opacity:0.6}
+.file-delete{background:none;border:none;font-size:18px;cursor:pointer;color:#e74c3c}
+.upload-btn{display:block;margin:16px 20px;padding:14px;border:2px dashed rgba(195,166,232,0.4);border-radius:14px;text-align:center;background:transparent;color:var(--text);cursor:pointer;font-size:14px}
+.empty-state{text-align:center;padding:40px;opacity:0.5}
+.main-view{display:block}
+</style>
+</head>
+<body>
+<div class="main-view" id="mainView">
+<div class="header">
+  <a href="index.html" class="back-btn">←</a>
+  <h1 id="pageTitle"></h1>
+  <button class="add-btn" onclick="openCreatePopup()">+</button>
+</div>
+<div class="search-bar"><input type="search" id="searchInput" oninput="filterFolders()" placeholder=""></div>
+<div class="section-title" id="pinnedTitle"></div>
+<div class="pinned-scroll" id="pinnedList"></div>
+<div class="section-title" id="allTitle"></div>
+<div class="folder-grid" id="folderGrid"></div>
+</div>
+
+<div class="folder-view" id="folderView">
+<div class="folder-view-header">
+  <button class="back-btn" onclick="closeFolderView()">←</button>
+  <h1 id="folderViewTitle"></h1>
+</div>
+<div class="file-list" id="fileList"></div>
+<label class="upload-btn" id="uploadBtn">
+  <input type="file" accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.txt" onchange="uploadFile(event)" style="display:none">
+  <span id="uploadText"></span>
+</label>
+</div>
+
+<div class="overlay" id="overlay" onclick="closeAll()"></div>
+<div class="popup" id="createPopup">
+  <div class="popup-title" id="createTitle"></div>
+  <input id="folderNameInput" placeholder="">
+  <input id="subjectInput" placeholder="">
+  <div class="color-picker" id="colorPicker"></div>
+  <button class="btn-save" id="btnCreate" onclick="createFolder()"></button>
+</div>
+<div class="context-menu" id="contextMenu"></div>
+
+<script>
+const T={
+  id:{title:'Folder Saya 📁',pinned:'Disematkan',all:'Semua Folder',create:'Buat Folder',
+    name:'Nama folder',subject:'Label mata pelajaran',save:'Simpan',search:'Cari folder...',
+    upload:'📎 Unggah file',pin:'📌 Sematkan',rename:'✏️ Ubah nama',color:'🎨 Ubah warna',delete:'🗑️ Hapus',
+    files:'file',empty:'Belum ada folder'},
+  en:{title:'My Folders 📁',pinned:'Pinned',all:'All Folders',create:'Create Folder',
+    name:'Folder name',subject:'Subject label',save:'Save',search:'Search folders...',
+    upload:'📎 Upload file',pin:'📌 Pin',rename:'✏️ Rename',color:'🎨 Change color',delete:'🗑️ Delete',
+    files:'files',empty:'No folders yet'}
+};
+const lang=localStorage.getItem('lang')||'id';const t=T[lang]||T.id;
+const colors=['#C3A6E8','#A8D8EA','#D4F0F0','#E8D5F5','#FFD6E0','#FFE5B4','#B5EAD7','#C7CEEA'];
+let folders=JSON.parse(localStorage.getItem('lumora_folders')||'[]');
+let selectedColor=colors[0];
+let currentFolderId=null;
+let longPressTimer=null;
+
+function applyLang(){
+  document.getElementById('pageTitle').textContent=t.title;
+  document.getElementById('pinnedTitle').textContent=t.pinned;
+  document.getElementById('allTitle').textContent=t.all;
+  document.getElementById('createTitle').textContent=t.create;
+  document.getElementById('folderNameInput').placeholder=t.name;
+  document.getElementById('subjectInput').placeholder=t.subject;
+  document.getElementById('btnCreate').textContent=t.save;
+  document.getElementById('searchInput').placeholder=t.search;
+  document.getElementById('uploadText').textContent=t.upload;
+  renderColorPicker();renderFolders();
+}
+
+function renderColorPicker(){
+  const c=document.getElementById('colorPicker');c.innerHTML='';
+  colors.forEach(clr=>{
+    const dot=document.createElement('div');dot.className='color-dot'+(clr===selectedColor?' active':'');
+    dot.style.background=clr;dot.onclick=()=>{selectedColor=clr;renderColorPicker()};c.appendChild(dot);
+  });
+}
+
+function renderFolders(){
+  const search=document.getElementById('searchInput').value.toLowerCase();
+  const filtered=folders.filter(f=>f.name.toLowerCase().includes(search));
+  const pinned=filtered.filter(f=>f.pinned);
+  const all=filtered;
+  
+  const pinnedList=document.getElementById('pinnedList');pinnedList.innerHTML='';
+  pinned.forEach(f=>{
+    pinnedList.innerHTML+=`<div class="pinned-card" onclick="openFolder('${f.id}')" ontouchstart="startLongPress(event,'${f.id}')" ontouchend="endLongPress()"><div class="folder-icon" style="color:${f.color}">📁</div><div class="folder-name">${f.name}</div><div class="folder-count">${(f.files||[]).length} ${t.files}</div>${f.subject?'<div class="folder-subject">'+f.subject+'</div>':''}</div>`;
+  });
+  document.getElementById('pinnedTitle').style.display=pinned.length?'block':'none';
+  document.getElementById('pinnedList').style.display=pinned.length?'flex':'none';
+
+  const grid=document.getElementById('folderGrid');grid.innerHTML='';
+  if(all.length===0){grid.innerHTML='<div class="empty-state" style="grid-column:1/3">'+t.empty+'</div>';return}
+  all.forEach(f=>{
+    grid.innerHTML+=`<div class="folder-card" onclick="openFolder('${f.id}')" ontouchstart="startLongPress(event,'${f.id}')" ontouchend="endLongPress()" oncontextmenu="event.preventDefault();showContext(event,'${f.id}')"><div class="folder-icon" style="color:${f.color}">📁</div><div class="folder-name">${f.name}</div><div class="folder-count">${(f.files||[]).length} ${t.files}</div>${f.subject?'<div class="folder-subject">'+f.subject+'</div>':''}</div>`;
+  });
+}
+
+function filterFolders(){renderFolders()}
+
+function openCreatePopup(){
+  document.getElementById('folderNameInput').value='';document.getElementById('subjectInput').value='';selectedColor=colors[0];renderColorPicker();
+  document.getElementById('overlay').classList.add('show');document.getElementById('createPopup').classList.add('show');
+}
+function closeAll(){
+  document.getElementById('overlay').classList.remove('show');document.getElementById('createPopup').classList.remove('show');
+  document.getElementById('contextMenu').classList.remove('show');
+}
+
+function createFolder(){
+  const name=document.getElementById('folderNameInput').value.trim();if(!name)return;
+  const subject=document.getElementById('subjectInput').value.trim();
+  folders.push({id:Date.now().toString(),name,color:selectedColor,subject,pinned:false,files:[]});
+  saveFolders();closeAll();renderFolders();
+}
+
+function saveFolders(){localStorage.setItem('lumora_folders',JSON.stringify(folders))}
+
+function startLongPress(e,id){longPressTimer=setTimeout(()=>showContext(e,id),500)}
+function endLongPress(){clearTimeout(longPressTimer)}
+
+function showContext(e,id){
+  e.preventDefault();
+  const menu=document.getElementById('contextMenu');
+  menu.innerHTML=`
+    <div class="context-item" onclick="pinFolder('${id}')">${t.pin}</div>
+    <div class="context-item" onclick="renameFolder('${id}')">${t.rename}</div>
+    <div class="context-item" onclick="changeColor('${id}')">${t.color}</div>
+    <div class="context-item" onclick="deleteFolder('${id}')">${t.delete}</div>`;
+  menu.style.top=Math.min(e.clientY||e.touches[0].clientY,window.innerHeight-180)+'px';
+  menu.style.left=Math.min(e.clientX||e.touches[0].clientX,300)+'px';
+  menu.classList.add('show');
+  document.getElementById('overlay').classList.add('show');
+}
+
+function pinFolder(id){const f=folders.find(f=>f.id===id);if(f){f.pinned=!f.pinned;saveFolders();renderFolders()}closeAll()}
+function renameFolder(id){const f=folders.find(f=>f.id===id);if(f){const name=prompt('',f.name);if(name){f.name=name;saveFolders();renderFolders()}}closeAll()}
+function changeColor(id){const f=folders.find(f=>f.id===id);if(f){const idx=colors.indexOf(f.color);f.color=colors[(idx+1)%colors.length];saveFolders();renderFolders()}closeAll()}
+function deleteFolder(id){folders=folders.filter(f=>f.id!==id);saveFolders();renderFolders();closeAll()}
+
+function openFolder(id){
+  currentFolderId=id;
+  const f=folders.find(f=>f.id===id);if(!f)return;
+  document.getElementById('mainView').style.display='none';
+  document.getElementById('folderView').classList.add('show');
+  document.getElementById('folderViewTitle').textContent=f.name;
+  renderFiles();
+}
+function closeFolderView(){
+  document.getElementById('mainView').style.display='block';
+  document.getElementById('folderView').classList.remove('show');
+}
+
+function renderFiles(){
+  const f=folders.find(f=>f.id===currentFolderId);if(!f)return;
+  const list=document.getElementById('fileList');list.innerHTML='';
+  (f.files||[]).forEach((file,i)=>{
+    const icons={'pdf':'📄','png':'🖼️','jpg':'🖼️','jpeg':'🖼️','doc':'📝','docx':'📝','txt':'📃'};
+    const ext=file.name.split('.').pop().toLowerCase();
+    list.innerHTML+=`<div class="file-item"><span class="file-icon">${icons[ext]||'📎'}</span><div class="file-info"><div class="file-name">${file.name}</div><div class="file-meta">${file.size} • ${file.date}</div></div><button class="file-delete" onclick="deleteFile(${i})">🗑️</button></div>`;
+  });
+}
+
+function uploadFile(e){
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(ev){
+    const f=folders.find(f=>f.id===currentFolderId);if(!f)return;
+    if(!f.files)f.files=[];
+    const sizeKB=Math.round(file.size/1024);
+    f.files.push({name:file.name,size:sizeKB>1024?(sizeKB/1024).toFixed(1)+' MB':sizeKB+' KB',date:new Date().toLocaleDateString(),data:ev.target.result});
+    saveFolders();renderFiles();
+  };
+  reader.readAsDataURL(file);
+  e.target.value='';
+}
+
+function deleteFile(idx){
+  const f=folders.find(f=>f.id===currentFolderId);if(!f)return;
+  f.files.splice(idx,1);saveFolders();renderFiles();
+}
+
+applyLang();
+</script>
+</body>
+</html>

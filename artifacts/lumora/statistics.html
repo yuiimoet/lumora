@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Lumora - Statistics</title>
+<script>if(localStorage.getItem('theme')==='dark')document.documentElement.classList.add('dark')</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{--bg:#F5F0FF;--card:#FFFFFF;--text:#4A4063}
+:root.dark{--bg:#1E1B2E;--card:#2A2640;--text:#E8D5F5}
+*{margin:0;padding:0;box-sizing:border-box}
+body{width:390px;max-width:100vw;margin:0 auto;min-height:100vh;background:var(--bg);font-family:'Segoe UI',system-ui,sans-serif;color:var(--text);padding-bottom:40px}
+.header{padding:20px;display:flex;align-items:center;gap:12px}
+.back-btn{background:none;border:none;font-size:24px;cursor:pointer;color:var(--text);text-decoration:none}
+.header h1{font-size:22px;font-weight:700;flex:1}
+.week-range{padding:0 20px;font-size:13px;opacity:0.6;margin-bottom:16px}
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 20px;margin-bottom:20px}
+.stat-card{background:var(--card);border-radius:16px;padding:16px;text-align:center;box-shadow:0 2px 8px rgba(195,166,232,0.1)}
+.stat-icon{font-size:28px;margin-bottom:8px}
+.stat-value{font-size:24px;font-weight:700}
+.stat-label{font-size:12px;opacity:0.6;margin-top:4px}
+.chart-section{background:var(--card);border-radius:16px;margin:0 20px 16px;padding:20px;box-shadow:0 2px 8px rgba(195,166,232,0.1)}
+.chart-title{font-size:16px;font-weight:600;margin-bottom:16px}
+canvas{max-width:100%;height:200px!important}
+</style>
+</head>
+<body>
+<div class="header">
+  <a href="index.html" class="back-btn">←</a>
+  <h1 id="pageTitle"></h1>
+</div>
+<div class="week-range" id="weekRange"></div>
+<div class="stats-grid">
+  <div class="stat-card"><div class="stat-icon">🔥</div><div class="stat-value" id="streak">0</div><div class="stat-label" id="lblStreak"></div></div>
+  <div class="stat-card"><div class="stat-icon">✅</div><div class="stat-value" id="tasksDone">0</div><div class="stat-label" id="lblTasks"></div></div>
+  <div class="stat-card"><div class="stat-icon">⏱️</div><div class="stat-value" id="focusTime">0h</div><div class="stat-label" id="lblFocus"></div></div>
+  <div class="stat-card"><div class="stat-icon">📈</div><div class="stat-value" id="avgSession">0m</div><div class="stat-label" id="lblAvg"></div></div>
+</div>
+<div class="chart-section">
+  <div class="chart-title" id="weeklyTitle"></div>
+  <canvas id="weeklyChart"></canvas>
+</div>
+<div class="chart-section">
+  <div class="chart-title" id="catTitle"></div>
+  <canvas id="catChart"></canvas>
+</div>
+<script>
+const T={
+  id:{title:'Statistik 📊',streak:'Streak Hari',tasks:'Tugas Selesai',focus:'Waktu Fokus',avg:'Rata-rata Sesi',weekly:'Fokus Mingguan',categories:'Kategori Tugas',
+    days:['Sen','Sel','Rab','Kam','Jum','Sab','Min'],cats:['Pribadi','Belajar','Kerja','Lainnya']},
+  en:{title:'Statistics 📊',streak:'Day Streak',tasks:'Tasks Done',focus:'Focus Time',avg:'Avg Session',weekly:'Weekly Focus',categories:'Task Categories',
+    days:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],cats:['Personal','Study','Work','Others']}
+};
+const lang=localStorage.getItem('lang')||'id';const t=T[lang]||T.id;
+
+document.getElementById('pageTitle').textContent=t.title;
+document.getElementById('lblStreak').textContent=t.streak;
+document.getElementById('lblTasks').textContent=t.tasks;
+document.getElementById('lblFocus').textContent=t.focus;
+document.getElementById('lblAvg').textContent=t.avg;
+document.getElementById('weeklyTitle').textContent=t.weekly;
+document.getElementById('catTitle').textContent=t.categories;
+
+const now=new Date();
+const startOfWeek=new Date(now);startOfWeek.setDate(now.getDate()-now.getDay()+1);
+const endOfWeek=new Date(startOfWeek);endOfWeek.setDate(startOfWeek.getDate()+6);
+document.getElementById('weekRange').textContent=startOfWeek.toLocaleDateString()+' - '+endOfWeek.toLocaleDateString();
+
+const tasks=JSON.parse(localStorage.getItem('lumora_tasks')||'[]');
+const sessions=JSON.parse(localStorage.getItem('lumora_sessions')||'[]');
+const doneTasks=tasks.filter(t=>t.done);
+document.getElementById('tasksDone').textContent=doneTasks.length;
+
+const totalSec=sessions.reduce((a,s)=>a+s.seconds,0);
+const hrs=Math.floor(totalSec/3600);
+const mins=Math.floor((totalSec%3600)/60);
+document.getElementById('focusTime').textContent=hrs>0?hrs+'h '+mins+'m':mins+'m';
+const avgSec=sessions.length?Math.round(totalSec/sessions.length):0;
+document.getElementById('avgSession').textContent=Math.round(avgSec/60)+'m';
+
+let streak=0;
+const today=new Date();today.setHours(0,0,0,0);
+for(let i=0;i<30;i++){
+  const d=new Date(today);d.setDate(d.getDate()-i);
+  const dayStr=d.toISOString().split('T')[0];
+  const hasSession=sessions.some(s=>s.date.startsWith(dayStr));
+  const hasTask=tasks.some(t=>t.done&&t.createdAt&&t.createdAt.startsWith(dayStr));
+  if(hasSession||hasTask)streak++;else if(i>0)break;
+}
+document.getElementById('streak').textContent=streak;
+
+const isDark=document.documentElement.classList.contains('dark');
+const textColor=isDark?'#E8D5F5':'#4A4063';
+const gridColor=isDark?'rgba(232,213,245,0.1)':'rgba(74,64,99,0.1)';
+
+const weeklyData=[45,30,60,20,50,35,40];
+new Chart(document.getElementById('weeklyChart'),{
+  type:'bar',
+  data:{labels:t.days,datasets:[{data:weeklyData,backgroundColor:'rgba(195,166,232,0.6)',borderRadius:8,borderSkipped:false}]},
+  options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{grid:{color:gridColor},ticks:{color:textColor}},x:{grid:{display:false},ticks:{color:textColor}}}}
+});
+
+const catKeys=['personal','study','work','others'];
+const catCounts=catKeys.map(k=>tasks.filter(t=>t.category===k).length);
+const hasCatData=catCounts.some(c=>c>0);
+new Chart(document.getElementById('catChart'),{
+  type:'doughnut',
+  data:{labels:t.cats,datasets:[{data:hasCatData?catCounts:[3,5,2,1],backgroundColor:['#C3A6E8','#A8D8EA','#D4F0F0','#E8D5F5'],borderWidth:0}]},
+  options:{responsive:true,plugins:{legend:{position:'bottom',labels:{color:textColor,padding:12}}}}
+});
+</script>
+</body>
+</html>
