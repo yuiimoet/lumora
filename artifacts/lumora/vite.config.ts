@@ -60,7 +60,6 @@ export default defineConfig({
         statistics: path.resolve(import.meta.dirname, "statistics.html"),
         applock: path.resolve(import.meta.dirname, "applock.html"),
         folder: path.resolve(import.meta.dirname, "folder.html"),
-        ai: path.resolve(import.meta.dirname, "ai.html"),
         settings: path.resolve(import.meta.dirname, "settings.html"),
         profile: path.resolve(import.meta.dirname, "profile.html"),
       },
