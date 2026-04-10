@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "29ukVkTC3jvueWctnL1uW"
+uri = "file://lumora-project.tar.gz"
+type = "unspecified"
+title = "Lumora Project (tar.gz)"
