@@ -1,9 +1,13 @@
 import { defineConfig } from "vite";
 import path from "path";
 
+
 const isDev = process.env.NODE_ENV !== "production";
 
 const port = Number(process.env.PORT) || 3000;
+
+const port = Number(process.env.PORT) || 3000;
+ ad17c40650d013840d1f40ff566c847efd9356a2
 const basePath = process.env.BASE_PATH || "/";
 
 export default defineConfig({
