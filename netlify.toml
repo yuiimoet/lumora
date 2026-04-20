@@ -1,0 +1,8 @@
+[build]
+  base    = "artifacts/lumora"
+  command = "npm install && npm run build"
+  publish = "artifacts/lumora/dist"
+
+[build.environment]
+  NODE_ENV  = "production"
+  NODE_VERSION = "20"
